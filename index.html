@@ -31,6 +31,7 @@ html,body{font-family:'Noto Sans KR',system-ui,-apple-system,sans-serif;backgrou
 .bo{background:transparent;border:1px solid var(--b2);color:var(--t2)}
 .bg{background:var(--green);color:#fff}.bd{background:var(--red);color:#fff}.bpu{background:var(--purple);color:#fff}
 .lh{margin-top:16px;padding:12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.15);border-radius:var(--rs);font-size:11px;color:var(--t2);line-height:1.7}.lh strong{color:var(--cyan)}
+.ltab{transition:all .2s}.ltab:hover{opacity:.8}
 /* App Layout */
 #AP{display:none;height:100vh;height:100dvh}
 .al{display:flex;height:100%}
@@ -266,11 +267,30 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 </style>
 </div>
 <h1>SITE-MASTER</h1><p class="sub">건설현장 관리시스템 v2.3</p><br>
+<!-- Mode tabs -->
+<div id="loginTabs" style="display:flex;gap:0;margin-bottom:16px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--b1)">
+<button class="ltab active" onclick="switchLoginMode('cloud')" id="tabCloud" style="flex:1;padding:10px;background:rgba(59,130,246,.15);color:var(--blue);border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">☁️ 클라우드</button>
+<button class="ltab" onclick="switchLoginMode('local')" id="tabLocal" style="flex:1;padding:10px;background:var(--bg1);color:var(--t3);border:none;font-family:inherit;font-size:12px;cursor:pointer">💾 로컬(오프라인)</button>
+</div>
+<!-- Cloud login -->
+<div id="loginCloud">
+<div class="fg"><label>이메일</label><input id="loginEmail" type="email" placeholder="name@company.com"></div>
+<div class="fg"><label>비밀번호</label><input type="password" id="loginCloudPw" placeholder="6자 이상"></div>
+<button class="btn bp" onclick="cloudLogin()" style="margin-bottom:8px">로그인</button>
+<div style="display:flex;gap:6px">
+<button class="btn bo" onclick="cloudSignup()" style="flex:1;font-size:12px">회원가입</button>
+<button class="btn bo" onclick="cloudResetPw()" style="flex:1;font-size:12px">비밀번호 찾기</button>
+</div>
+<div id="cloudStatus" style="margin-top:10px;font-size:11px;color:var(--t3);text-align:center"></div>
+</div>
+<!-- Local login (existing) -->
+<div id="loginLocal" style="display:none">
 <div class="fg"><label>아이디</label><input id="loginId" value="admin"></div>
 <div class="fg"><label>비밀번호</label><input type="password" id="loginPw" value="1234"></div>
 <div class="fg"><label>현장 선택</label><select id="loginSite"><option value="all">전체 현장 (관리자)</option><option value="site1">세종시 행복아파트</option><option value="site2">대전 한빛아파트</option></select></div>
 <button class="btn bp" onclick="doLogin()">로그인</button>
 <div class="lh"><strong>테스트 계정</strong><br>관리자: admin / 1234<br>현장담당: manager1 / 1234 (세종시)<br>현장담당: manager2 / 1234 (대전)</div>
+</div>
 </div></div>
 
 <div id="AP"><div class="al">
@@ -282,9 +302,10 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 <div class="ns"><div class="nst">시공관리</div><div class="ni" data-p="v3d" onclick="nav('v3d')">🏢 3D 시공현황</div><div class="ni" data-p="prog" onclick="nav('prog')">📋 시공현황</div><div class="ni" data-p="bldg" onclick="nav('bldg')">⚙️ 동 설정</div></div>
 <div class="ns"><div class="nst">발주관리</div><div class="ni" data-p="alerts" onclick="nav('alerts')">🔔 발주 알림<span class="bdg" id="AB" style="display:none">0</span></div><div class="ni" data-p="pset" id="navPS" onclick="nav('pset')">⚡ 발주 설정</div><div class="ni" data-p="pstat" onclick="nav('pstat')">📦 발주 현황</div></div>
 <div class="ns"><div class="nst">검수관리</div><div class="ni" data-p="insp" onclick="nav('insp')">🔬 공장검수</div></div>
+<div class="ns" id="navAdmin" style="display:none"><div class="nst">관리자</div><div class="ni" data-p="sites" onclick="nav('sites')">🏗️ 현장 생성/관리</div><div class="ni" data-p="users" onclick="nav('users')">👷 담당자 배정</div></div>
 <div class="ns"><div class="nst">기록</div><div class="ni" data-p="hist" onclick="nav('hist')">📝 수정이력</div></div>
 </nav>
-<div class="sbf"><div class="ui"><div class="ua" id="UA"></div><div class="ud"><div class="nm" id="UN"></div><div class="rl" id="UR"></div></div></div><button class="lb" onclick="doLogout()">로그아웃</button></div>
+<div class="sbf"><div class="ui"><div class="ua" id="UA"></div><div class="ud"><div class="nm" id="UN"></div><div class="rl" id="UR"></div></div></div><div id="cloudBadge" style="display:none;text-align:center;padding:4px;margin-top:4px;font-size:9px;color:var(--cyan);background:rgba(6,182,212,.08);border-radius:4px">☁️ 클라우드 동기화</div><button class="lb" onclick="doLogout()">로그아웃</button></div>
 </aside>
 <main class="mc">
 <div class="ch"><button class="hamburger" onclick="toggleSB()">☰</button><div><h2 id="PT">대시보드</h2><div class="bc" id="PB"></div></div></div>
@@ -313,6 +334,8 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 <div class="pg" id="pg-pset"><div class="cd"><div class="ct">발주 설정 <span style="font-size:10px;color:var(--amber)">관리자전용</span></div><div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap"><select id="psS" onchange="rPS()" style="padding:6px 10px;background:var(--bg1);border:1px solid var(--b1);color:var(--t1);border-radius:6px;font-size:12px"></select><button class="btn bs bg" onclick="openAddRule()">+ 규칙</button></div><div class="tw"><table><thead><tr><th>자재</th><th>조건</th><th>리드타임</th><th>대상</th><th>상태</th><th>관리</th></tr></thead><tbody id="PSB"></tbody></table></div></div></div>
 <div class="pg" id="pg-pstat"><div class="cd"><div class="ct">발주 진행현황</div><div style="font-size:9px;color:var(--t3);margin-bottom:10px">발주준비→의뢰서상신→입찰예정→입찰완료→발주완료</div><div class="tw"><table><thead><tr><th>현장</th><th>자재</th><th>발주일</th><th>상태</th><th>담당</th><th>관리</th></tr></thead><tbody id="PST"></tbody></table></div></div></div>
 <div class="pg" id="pg-insp"><div class="cd"><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap"><span style="font-size:13px;font-weight:700">공장검수/테스트</span><select id="isS" onchange="rInsp()" style="padding:4px 8px;background:var(--bg1);border:1px solid var(--b1);color:var(--t1);border-radius:6px;font-size:11px"></select><button class="btn bs bg" style="margin-left:auto" onclick="openAddInsp()">+ 추가</button></div><div id="IL"></div></div></div>
+<div class="pg" id="pg-sites"><div class="cd"><div class="ct">현장 생성/관리 <span id="siteCount" style="font-size:11px;color:var(--t3)"></span><button class="btn bs bg" style="margin-left:auto" onclick="openAddSite()">+ 현장 추가</button></div><div id="SML"></div></div></div>
+<div class="pg" id="pg-users"><div class="cd"><div class="ct">담당자 배정</div><div style="font-size:11px;color:var(--t3);margin-bottom:12px">담당자에게 현장을 배정하면 해당 현장만 볼 수 있습니다</div><div id="UML"></div></div></div>
 <div class="pg" id="pg-hist"><div class="cd"><div class="ct">수정이력</div><div id="HL"></div></div></div>
 </div></main></div></div>
 
@@ -326,6 +349,21 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 </div>
 
 <!-- Modals -->
+<div class="mo" id="mAddSite"><div class="md"><div class="mh"><h3 id="mSiteTitle">현장 추가</h3><button class="mx" onclick="cM('mAddSite')">×</button></div><div class="mb">
+<div class="fr"><div class="fd"><label>현장명 *</label><input id="nsName" placeholder="세종시 행복아파트"></div><div class="fd"><label>공사명</label><input id="nsProject" placeholder="세종시 행복아파트 신축공사"></div></div>
+<div class="fr"><div class="fd"><label>위치</label><input id="nsLocation" placeholder="세종특별자치시 행복동 123-4"></div><div class="fd"><label>구조</label><input id="nsStructure" placeholder="철근콘크리트 벽식구조"></div></div>
+<div class="fr"><div class="fd"><label>위도 (°N)</label><input id="nsLat" type="number" step="0.01" placeholder="36.48"></div><div class="fd"><label>경도 (°E)</label><input id="nsLng" type="number" step="0.01" placeholder="127.00"></div></div>
+<div class="fr"><div class="fd"><label>발주처</label><input id="nsOwner"></div><div class="fd"><label>시공사</label><input id="nsContractor"></div></div>
+<div class="fr"><div class="fd"><label>감리사</label><input id="nsSupervisor"></div><div class="fd"><label>세대수</label><input id="nsHouseholds"></div></div>
+<div class="fr"><div class="fd"><label>대지면적</label><input id="nsTotalArea"></div><div class="fd"><label>건축면적</label><input id="nsBuildArea"></div></div>
+<div class="fr"><div class="fd"><label>착공일</label><input type="date" id="nsStart"></div><div class="fd"><label>준공예정일</label><input type="date" id="nsEnd"></div></div>
+<input type="hidden" id="nsEditId" value="">
+</div><div class="mf"><button class="btn bs bo" onclick="cM('mAddSite')">취소</button><button class="btn bs bg" onclick="saveSite()">저장</button></div></div></div>
+<div class="mo" id="mUserEdit"><div class="md"><div class="mh"><h3>담당자 현장 배정</h3><button class="mx" onclick="cM('mUserEdit')">×</button></div><div class="mb">
+<div class="fd" style="margin-bottom:12px"><label>담당자</label><div id="ueUserName" style="font-size:14px;font-weight:700;padding:8px 0"></div></div>
+<div class="fd"><label>배정 현장 (체크하여 선택)</label><div id="ueSiteChecks" style="max-height:300px;overflow-y:auto"></div></div>
+<input type="hidden" id="ueUserId" value="">
+</div><div class="mf"><button class="btn bs bo" onclick="cM('mUserEdit')">취소</button><button class="btn bs bg" onclick="saveUserSites()">저장</button></div></div></div>
 <div class="mo" id="mAddB"><div class="md"><div class="mh"><h3>동 추가</h3><button class="mx" onclick="cM('mAddB')">×</button></div><div class="mb">
 <div class="fr"><div class="fd"><label>동 번호</label><input id="nBN" placeholder="101"></div><div class="fd"><label>동 이름</label><input id="nBNm" placeholder="101동"></div></div>
 <div class="fr c3"><div class="fd"><label>지하(최대10)</label><input type="number" id="nBBm" min="0" max="10" value="2"></div><div class="fd"><label>지상(최대50)</label><input type="number" id="nBF" min="1" max="50" value="25"></div><div class="fd"><label>호수(최대6)</label><input type="number" id="nBU" min="1" max="6" value="4"></div></div>
@@ -347,6 +385,146 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 <script>
 "use strict";
 // ===== SITE-MASTER v2.3 =====
+// ===== SUPABASE CONFIG =====
+// Supabase 프로젝트 설정에서 URL과 anon key를 복사하세요
+var SUPABASE_URL='YOUR_SUPABASE_URL';  // 예: https://abc123.supabase.co
+var SUPABASE_KEY='YOUR_SUPABASE_ANON_KEY';  // 예: eyJhbGci...
+var SB=null; // Supabase client
+var SB_USER=null; // Current Supabase user
+var USE_CLOUD=false; // Cloud mode flag
+
+// Initialize Supabase (if configured)
+function initSupabase(){
+if(SUPABASE_URL==='YOUR_SUPABASE_URL'||!window.supabase)return false;
+try{SB=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);return true}catch(e){console.warn('Supabase init failed:',e);return false}}
+
+// Login mode switcher
+function switchLoginMode(mode){
+document.getElementById('loginCloud').style.display=mode==='cloud'?'block':'none';
+document.getElementById('loginLocal').style.display=mode==='local'?'block':'none';
+document.getElementById('tabCloud').style.background=mode==='cloud'?'rgba(59,130,246,.15)':'var(--bg1)';
+document.getElementById('tabCloud').style.color=mode==='cloud'?'var(--blue)':'var(--t3)';
+document.getElementById('tabLocal').style.background=mode==='local'?'rgba(59,130,246,.15)':'var(--bg1)';
+document.getElementById('tabLocal').style.color=mode==='local'?'var(--blue)':'var(--t3)';
+// If Supabase not configured, show message
+if(mode==='cloud'&&!initSupabase()){
+document.getElementById('cloudStatus').innerHTML='<span style="color:var(--amber)">Supabase 미설정</span><br><span style="font-size:10px">index.html 상단의 SUPABASE_URL/KEY를 설정하세요.<br>또는 로컬 모드를 사용하세요.</span>'}}
+
+// ===== CLOUD AUTH =====
+function setCloudStatus(msg,isErr){var el=document.getElementById('cloudStatus');if(el){el.textContent=msg;el.style.color=isErr?'var(--red)':'var(--green)'}}
+
+function cloudLogin(){
+if(!SB){setCloudStatus('Supabase 미설정',true);return}
+var email=document.getElementById('loginEmail').value.trim();
+var pw=document.getElementById('loginCloudPw').value;
+if(!email||!pw){setCloudStatus('이메일과 비밀번호를 입력하세요',true);return}
+setCloudStatus('로그인 중...');
+SB.auth.signInWithPassword({email:email,password:pw}).then(function(res){
+if(res.error){setCloudStatus(res.error.message,true);return}
+SB_USER=res.data.user;USE_CLOUD=true;
+// Load profile
+SB.from('profiles').select('*').eq('id',SB_USER.id).single().then(function(pr){
+if(pr.error||!pr.data){setCloudStatus('프로필 없음. 관리자에게 문의하세요.',true);return}
+CU={id:SB_USER.id,name:pr.data.name,role:pr.data.role,sites:pr.data.sites||['all'],curSite:pr.data.role==='admin'?'all':(pr.data.sites||[])[0]||'all'};
+// Load cloud data
+loadCloudData().then(function(){
+document.getElementById('LP').style.display='none';document.getElementById('AP').style.display='block';
+setup();toast(CU.name+'님 환영합니다! ☁️','success');
+setTimeout(function(){mascotReact('login');setMascotMood('love','jump');showMascotTip('클라우드 연결!','데이터가 실시간 동기화됩니다 ☁️')},800);
+resetIdleTimer()})})}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
+
+function cloudSignup(){
+if(!SB){setCloudStatus('Supabase 미설정',true);return}
+var email=document.getElementById('loginEmail').value.trim();
+var pw=document.getElementById('loginCloudPw').value;
+if(!email||!pw){setCloudStatus('이메일과 비밀번호를 입력하세요',true);return}
+if(pw.length<6){setCloudStatus('비밀번호 6자 이상',true);return}
+setCloudStatus('가입 중...');
+SB.auth.signUp({email:email,password:pw}).then(function(res){
+if(res.error){setCloudStatus(res.error.message,true);return}
+// Create org + profile
+var uid=res.data.user.id;
+SB.from('organizations').insert({name:'My Org'}).select().single().then(function(org){
+if(org.error){setCloudStatus('조직 생성 실패',true);return}
+SB.from('profiles').insert({id:uid,org_id:org.data.id,name:email.split('@')[0],role:'admin',sites:['all']}).then(function(pr){
+if(pr.error){setCloudStatus('프로필 생성 실패: '+pr.error.message,true);return}
+// Create default sites
+var orgId=org.data.id;
+var initPromises=[
+SB.from('sites').insert([
+{id:'site1',org_id:orgId,name:'현장 1',info:{projectName:'신축공사 1',location:'',lat:37.5,lng:127}},
+{id:'site2',org_id:orgId,name:'현장 2',info:{projectName:'신축공사 2',location:'',lat:37.5,lng:127}}
+])];
+Promise.all(initPromises).then(function(){
+setCloudStatus('가입 완료! 로그인 해주세요.')})})})}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
+
+function cloudResetPw(){
+if(!SB){setCloudStatus('Supabase 미설정',true);return}
+var email=document.getElementById('loginEmail').value.trim();
+if(!email){setCloudStatus('이메일을 입력하세요',true);return}
+SB.auth.resetPasswordForEmail(email).then(function(res){
+if(res.error){setCloudStatus(res.error.message,true);return}
+setCloudStatus('비밀번호 재설정 메일을 보냈습니다')})}
+
+// ===== CLOUD DATA SYNC =====
+function loadCloudData(){
+if(!SB||!USE_CLOUD)return Promise.resolve();
+return SB.from('sites').select('*').then(function(res){
+if(res.error)return;
+var d=gDB();
+// Merge cloud sites into local data
+res.data.forEach(function(cs){
+d.sites[cs.id]={id:cs.id,name:cs.name,info:cs.info||{},buildings:[],progress:{}};
+});
+// Load buildings
+return SB.from('buildings').select('*').then(function(bRes){
+if(!bRes.error)bRes.data.forEach(function(b){
+if(d.sites[b.site_id]){
+d.sites[b.site_id].buildings.push({id:b.id,number:b.number,name:b.name,type:b.type,basement:b.basement,floors:b.floors,units:b.units,posX:b.pos_x,posZ:b.pos_z,rot:b.rot})}});
+// Load progress
+return SB.from('progress').select('*').then(function(pRes){
+if(!pRes.error)pRes.data.forEach(function(p){
+if(d.sites[p.site_id]){
+if(!d.sites[p.site_id].progress[p.building_id])d.sites[p.site_id].progress[p.building_id]={};
+if(!d.sites[p.site_id].progress[p.building_id][p.floor_key])d.sites[p.site_id].progress[p.building_id][p.floor_key]={};
+d.sites[p.site_id].progress[p.building_id][p.floor_key][p.unit]=p.status}});
+// Load other data
+return Promise.all([
+SB.from('proc_rules').select('*'),
+SB.from('proc_orders').select('*'),
+SB.from('alerts').select('*'),
+SB.from('inspections').select('*'),
+SB.from('edit_history').select('*').order('created_at',{ascending:false}).limit(100)
+]).then(function(results){
+if(!results[0].error)d.procRules=results[0].data.map(function(r){return{id:r.id,siteId:r.site_id,material:r.material,condFloor:r.cond_floor,lead:r.lead_days,target:r.target,active:r.active}});
+if(!results[1].error)d.procOrders=results[1].data.map(function(o){return{id:o.id,siteId:o.site_id,material:o.material,orderDate:o.order_date,status:o.status,manager:o.manager_id,note:o.note}});
+if(!results[2].error)d.alerts=results[2].data.map(function(a){return{id:a.id,siteId:a.site_id,ruleId:a.rule_id,material:a.material,message:a.message,type:a.type,date:a.date,read:a.read}});
+if(!results[3].error)d.inspections=results[3].data.map(function(i){return{id:i.id,siteId:i.site_id,name:i.name,category:i.category,target:i.target,vendor:i.vendor,date:i.date,status:i.status,manager:i.manager,location:i.location,note:i.note}});
+if(!results[4].error)d.editHistory=results[4].data.map(function(h){return{time:h.time,user:h.user_name,action:h.action,detail:h.detail}});
+sDB(d)})})})
+})}
+
+// Save to cloud (debounced)
+var _cloudSaveTimer=null;
+function saveToCloud(){
+if(!SB||!USE_CLOUD||!SB_USER)return;
+if(_cloudSaveTimer)clearTimeout(_cloudSaveTimer);
+_cloudSaveTimer=setTimeout(function(){_doCloudSave()},2000)}
+
+function _doCloudSave(){
+var d=gDB();
+// Save sites
+for(var si in d.sites){var s=d.sites[si];
+SB.from('sites').upsert({id:s.id,name:s.name,info:s.info}).then(function(){});
+// Save buildings
+s.buildings.forEach(function(b){
+SB.from('buildings').upsert({id:b.id,site_id:s.id,number:b.number,name:b.name,type:b.type,basement:b.basement,floors:b.floors,units:b.units,pos_x:b.posX||0,pos_z:b.posZ||0,rot:b.rot||0}).then(function(){})});
+// Save progress
+for(var bi in s.progress)for(var fk in s.progress[bi])for(var u in s.progress[bi][fk]){
+SB.from('progress').upsert({site_id:s.id,building_id:bi,floor_key:fk,unit:u,status:s.progress[bi][fk][u],updated_by:SB_USER.id},{onConflict:'building_id,floor_key,unit'}).then(function(){})}}}
+
+// Wrap sDB to also save to cloud
+var _origSDB=null;
 var DK='SM_V23';
 var SC=['pending','inprogress','complete'];
 var SL={pending:'준비중',inprogress:'시공중',complete:'시공완료'};
@@ -361,7 +539,7 @@ var ISI={scheduled:'📋',inprogress:'🔄',pass:'✅',fail:'❌',retest:'🔁'}
 // Storage - safe for iOS private + file://
 var _memDB=null;
 function gDB(){try{var r=localStorage.getItem(DK);if(r){_memDB=JSON.parse(r);return _memDB}}catch(e){}if(_memDB)return _memDB;return iDB()}
-function sDB(d){_memDB=d;try{localStorage.setItem(DK,JSON.stringify(d))}catch(e){}}
+function sDB(d){_memDB=d;try{localStorage.setItem(DK,JSON.stringify(d))}catch(e){}saveToCloud()}
 
 function iDB(){
 var d={users:[{id:'admin',pw:'1234',name:'김관리',role:'admin',sites:['all']},{id:'manager1',pw:'1234',name:'이현장',role:'manager',sites:['site1']},{id:'manager2',pw:'1234',name:'박현장',role:'manager',sites:['site2']}],
@@ -528,14 +706,20 @@ function doLogin(){var id=document.getElementById('loginId').value.trim(),pw=doc
 // Mascot entrance with delay for visibility
 setTimeout(function(){mascotReact('login');setMascotMood('love','jump');showMascotTip('여기 있어요! 👋',u.name+'님 반가워요! 저를 눌러보세요~')},800);
 resetIdleTimer()}
-function doLogout(){CU=null;closeSB();document.getElementById('LP').style.display='flex';document.getElementById('AP').style.display='none';var mf=document.getElementById('mascotFloat');if(mf)mf.classList.add('hide');var mb=document.getElementById('mascotBody');if(mb)mb.innerHTML='';if(tAF)cancelAnimationFrame(tAF);if(tR){tR.dispose();tR=null}}
-function setup(){var ia=CU.role==='admin';document.getElementById('UA').className='ua '+(ia?'admin':'manager');document.getElementById('UA').textContent=CU.name[0];document.getElementById('UN').textContent=CU.name;document.getElementById('UR').textContent=ia?'관리자':'현장담당';document.getElementById('navPS').style.display=ia?'flex':'none';var d=gDB();document.getElementById('SN').textContent=ia?'전체 현장 관리':(d.sites[CU.curSite]?d.sites[CU.curSite].name:'');popSel();updBdg();nav('dash')}
+function doLogout(){
+if(USE_CLOUD&&SB){SB.auth.signOut();SB_USER=null;USE_CLOUD=false}
+CU=null;closeSB();document.getElementById('LP').style.display='flex';document.getElementById('AP').style.display='none';var mf=document.getElementById('mascotFloat');if(mf)mf.classList.add('hide');var mb=document.getElementById('mascotBody');if(mb)mb.innerHTML='';if(tAF)cancelAnimationFrame(tAF);if(tR){tR.dispose();tR=null}}
+function setup(){var ia=CU.role==='admin';document.getElementById('UA').className='ua '+(ia?'admin':'manager');document.getElementById('UA').textContent=CU.name[0];document.getElementById('UN').textContent=CU.name;document.getElementById('UR').textContent=ia?'관리자':'현장담당';document.getElementById('navPS').style.display=ia?'flex':'none';document.getElementById('navAdmin').style.display=ia?'block':'none';var d=gDB();document.getElementById('SN').textContent=ia?'전체 현장 관리':(d.sites[CU.curSite]?d.sites[CU.curSite].name:'');var cb=document.getElementById('cloudBadge');if(cb)cb.style.display=USE_CLOUD?'block':'none';popSel();updBdg();nav('dash')}
 
 // Navigation
-function nav(p){if(p==='pset'&&CU.role!=='admin'){toast('관리자만 접근','error');return}CP=p;closeSB();var pages=document.querySelectorAll('.pg');for(var i=0;i<pages.length;i++)pages[i].classList.remove('active');var navs=document.querySelectorAll('.ni');for(var i=0;i<navs.length;i++)navs[i].classList.remove('active');var pe=document.getElementById('pg-'+p);if(pe)pe.classList.add('active');var ne=document.querySelector('.ni[data-p="'+p+'"]');if(ne)ne.classList.add('active');
-var ti={dash:['대시보드','메인>대시보드'],info:['현장정보','메인>현장정보'],v3d:['3D 시공현황','시공>3D'],prog:['시공현황','시공>현황'],bldg:['동 설정','시공>동설정'],alerts:['발주 알림','발주>알림'],pset:['발주 설정','발주>설정'],pstat:['발주 현황','발주>현황'],insp:['공장검수','검수>공장검수'],hist:['수정이력','기록>이력']};
+function nav(p){
+// Strict access control
+var adminOnly=['pset','sites','users'];
+if(adminOnly.indexOf(p)>=0&&CU.role!=='admin'){toast('관리자만 접근 가능','error');return}
+CP=p;closeSB();var pages=document.querySelectorAll('.pg');for(var i=0;i<pages.length;i++)pages[i].classList.remove('active');var navs=document.querySelectorAll('.ni');for(var i=0;i<navs.length;i++)navs[i].classList.remove('active');var pe=document.getElementById('pg-'+p);if(pe)pe.classList.add('active');var ne=document.querySelector('.ni[data-p="'+p+'"]');if(ne)ne.classList.add('active');
+var ti={dash:['대시보드','메인>대시보드'],info:['현장정보','메인>현장정보'],v3d:['3D 시공현황','시공>3D'],prog:['시공현황','시공>현황'],bldg:['동 설정','시공>동설정'],alerts:['발주 알림','발주>알림'],pset:['발주 설정','발주>설정'],pstat:['발주 현황','발주>현황'],insp:['공장검수','검수>공장검수'],sites:['현장 관리','관리자>현장'],users:['담당자 배정','관리자>담당자'],hist:['수정이력','기록>이력']};
 var t=ti[p]||['',''];document.getElementById('PT').textContent=t[0];document.getElementById('PB').textContent=t[1];
-var fn={dash:rDash,info:rInfo,v3d:init3D,prog:rPT,bldg:rBC,alerts:rAlerts,pset:rPS,pstat:rPStat,insp:rInsp,hist:rHist};if(fn[p])fn[p]();mascotReact('nav')}
+var fn={dash:rDash,info:rInfo,v3d:init3D,prog:rPT,bldg:rBC,alerts:rAlerts,pset:rPS,pstat:rPStat,insp:rInsp,sites:rSites,users:rUsers,hist:rHist};if(fn[p])fn[p]();mascotReact('nav')}
 
 // Dashboard
 function rDash(){var d=gDB(),ss=gUS();var tb=0,th=0;ss.forEach(function(s){tb+=s.buildings.length;s.buildings.forEach(function(b){th+=(b.basement+b.floors)*b.units})});var avg=ss.length?Math.round(ss.reduce(function(sum,s){return sum+gProg(s.id)},0)/ss.length):0;var als=d.alerts.filter(function(a){return gUS().map(function(s){return s.id}).indexOf(a.siteId)>=0}),ur=als.filter(function(a){return !a.read}).length;
@@ -763,15 +947,189 @@ if(eid){d.inspections.forEach(function(i){if(i.id===eid){for(var k in dt)i[k]=dt
 function delInsp(id){if(!confirm('삭제?'))return;var d=gDB();d.inspections=d.inspections.filter(function(x){return x.id!==id});sDB(d);rInsp();toast('삭제','info')}
 
 // History
+// ===== ADMIN: Site Management =====
+var MAX_SITES=40;
+function rSites(){
+if(CU.role!=='admin')return;
+var d=gDB();var siteList=[];for(var k in d.sites)siteList.push(d.sites[k]);
+document.getElementById('siteCount').textContent='('+siteList.length+'/'+MAX_SITES+' 현장)';
+if(!siteList.length){document.getElementById('SML').innerHTML=emptyState('현장을 추가해보세요');return}
+document.getElementById('SML').innerHTML='<div class="gr g2">'+siteList.map(function(s){
+var bCnt=s.buildings?s.buildings.length:0;var prog=gProg(s.id);
+// Count assigned managers
+var mgrs=d.users.filter(function(u){return u.role==='manager'&&u.sites.indexOf(s.id)>=0});
+return '<div class="cd" style="margin:0"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px"><div><div style="font-size:14px;font-weight:700">'+s.name+'</div><div style="font-size:11px;color:var(--t3);margin-top:2px">'+(s.info.projectName||'-')+'</div></div><div style="display:flex;gap:4px"><button class="btn bx bpu" onclick="editSite(\''+s.id+'\')">수정</button><button class="btn bx bd" onclick="delSite(\''+s.id+'\')">삭제</button></div></div>'
++'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:11px;margin-bottom:8px">'
++'<div><span style="color:var(--t3);font-size:9px">위치</span><br>'+(s.info.location||'-').substring(0,15)+'</div>'
++'<div><span style="color:var(--t3);font-size:9px">동수</span><br><strong>'+bCnt+'</strong>개</div>'
++'<div><span style="color:var(--t3);font-size:9px">담당자</span><br><strong>'+mgrs.length+'</strong>명</div></div>'
++'<div style="display:flex;align-items:center;gap:6px"><div class="pb" style="flex:1"><div class="pf blue" style="width:'+prog+'%"></div></div><span style="font-size:10px;color:var(--blue)">'+prog+'%</span></div>'
++'<div style="margin-top:6px;font-size:9px;color:var(--t3)">담당: '+(mgrs.length?mgrs.map(function(m){return m.name}).join(', '):'미배정')+'</div>'
++'</div>'}).join('')+'</div>'}
+
+function openAddSite(){
+if(CU.role!=='admin')return;
+var d=gDB();var cnt=0;for(var k in d.sites)cnt++;
+if(cnt>=MAX_SITES){toast('최대 '+MAX_SITES+'개까지 생성 가능','warning');return}
+document.getElementById('mSiteTitle').textContent='현장 추가';
+document.getElementById('nsEditId').value='';
+var fields=['nsName','nsProject','nsLocation','nsStructure','nsLat','nsLng','nsOwner','nsContractor','nsSupervisor','nsHouseholds','nsTotalArea','nsBuildArea','nsStart','nsEnd'];
+for(var i=0;i<fields.length;i++){var el=document.getElementById(fields[i]);if(el)el.value=''}
+oM('mAddSite')}
+
+function editSite(si){
+if(CU.role!=='admin')return;
+var d=gDB(),s=d.sites[si];if(!s)return;
+document.getElementById('mSiteTitle').textContent='현장 수정';
+document.getElementById('nsEditId').value=si;
+document.getElementById('nsName').value=s.name||'';
+document.getElementById('nsProject').value=s.info.projectName||'';
+document.getElementById('nsLocation').value=s.info.location||'';
+document.getElementById('nsStructure').value=s.info.structure||'';
+document.getElementById('nsLat').value=s.info.lat||'';
+document.getElementById('nsLng').value=s.info.lng||'';
+document.getElementById('nsOwner').value=s.info.owner||'';
+document.getElementById('nsContractor').value=s.info.contractor||'';
+document.getElementById('nsSupervisor').value=s.info.supervisor||'';
+document.getElementById('nsHouseholds').value=s.info.households||'';
+document.getElementById('nsTotalArea').value=s.info.totalArea||'';
+document.getElementById('nsBuildArea').value=s.info.buildingArea||'';
+document.getElementById('nsStart').value=s.info.startDate||'';
+document.getElementById('nsEnd').value=s.info.endDate||'';
+oM('mAddSite')}
+
+function saveSite(){
+if(CU.role!=='admin')return;
+var name=document.getElementById('nsName').value.trim();
+if(!name){toast('현장명을 입력하세요','error');return}
+var d=gDB();var editId=document.getElementById('nsEditId').value;
+var info={
+projectName:document.getElementById('nsProject').value.trim(),
+location:document.getElementById('nsLocation').value.trim(),
+lat:parseFloat(document.getElementById('nsLat').value)||0,
+lng:parseFloat(document.getElementById('nsLng').value)||0,
+owner:document.getElementById('nsOwner').value.trim(),
+contractor:document.getElementById('nsContractor').value.trim(),
+supervisor:document.getElementById('nsSupervisor').value.trim(),
+households:document.getElementById('nsHouseholds').value.trim(),
+totalArea:document.getElementById('nsTotalArea').value.trim(),
+buildingArea:document.getElementById('nsBuildArea').value.trim(),
+startDate:document.getElementById('nsStart').value,
+endDate:document.getElementById('nsEnd').value,
+structure:document.getElementById('nsStructure').value.trim(),
+floors:'',
+};
+if(editId){
+// Update existing
+if(!d.sites[editId])return;
+d.sites[editId].name=name;
+d.sites[editId].info=info;
+addHist('현장 수정',name);
+}else{
+// Create new
+var cnt=0;for(var k in d.sites)cnt++;
+if(cnt>=MAX_SITES){toast('최대 '+MAX_SITES+'개','warning');return}
+var newId='site'+Date.now();
+d.sites[newId]={id:newId,name:name,info:info,buildings:[],progress:{}};
+addHist('현장 생성',name);
+}
+sDB(d);cM('mAddSite');popSel(true);rSites();toast(editId?'현장 수정 완료':'현장 생성 완료','success')}
+
+function delSite(si){
+if(CU.role!=='admin')return;
+var d=gDB(),s=d.sites[si];if(!s)return;
+if(!confirm(s.name+' 현장을 삭제하시겠습니까?\n모든 동, 시공현황, 발주, 검수 데이터가 삭제됩니다.'))return;
+var sname=s.name;
+// Remove site
+delete d.sites[si];
+// Remove related data
+d.procRules=d.procRules.filter(function(r){return r.siteId!==si});
+d.procOrders=d.procOrders.filter(function(o){return o.siteId!==si});
+d.alerts=d.alerts.filter(function(a){return a.siteId!==si});
+d.inspections=d.inspections.filter(function(i){return i.siteId!==si});
+// Remove site from manager assignments
+d.users.forEach(function(u){if(u.sites){u.sites=u.sites.filter(function(s){return s!==si})}});
+sDB(d);addHist('현장 삭제',sname);popSel(true);rSites();toast(sname+' 삭제됨','info')}
+
+// ===== ADMIN: User Management =====
+function rUsers(){
+if(CU.role!=='admin')return;
+var d=gDB();
+var allSites=[];for(var k in d.sites)allSites.push(d.sites[k]);
+document.getElementById('UML').innerHTML='<div class="tw"><table><thead><tr><th>이름</th><th>아이디</th><th>역할</th><th>배정 현장</th><th>관리</th></tr></thead><tbody>'
++d.users.map(function(u){
+var assignedNames=[];
+if(u.role==='admin'){assignedNames=['전체 현장']}
+else{u.sites.forEach(function(si){if(d.sites[si])assignedNames.push(d.sites[si].name)})}
+return '<tr><td style="font-weight:600">'+u.name+'</td><td style="font-size:11px;color:var(--t3)">'+u.id+'</td>'
++'<td><span class="st '+(u.role==='admin'?'stc':'stp')+'" style="font-size:10px">'+(u.role==='admin'?'관리자':'현장담당')+'</span></td>'
++'<td style="font-size:11px">'+(assignedNames.length?assignedNames.join(', '):'<span style="color:var(--red)">미배정</span>')+'</td>'
++'<td>'+(u.role==='manager'?'<button class="btn bx bpu" onclick="editUserSites(\''+u.id+'\')">배정</button>':'<span style="font-size:10px;color:var(--t3)">-</span>')+'</td></tr>'
+}).join('')+'</tbody></table></div>'
++'<div style="margin-top:12px;padding:12px;background:rgba(59,130,246,.06);border:1px solid var(--b1);border-radius:var(--rs);font-size:11px;color:var(--t2)">'
++'<div style="font-weight:600;margin-bottom:4px;color:var(--cyan)">현장담당 계정 안내</div>'
++'로컬 모드: 기본 계정 (manager1/1234, manager2/1234)<br>'
++'클라우드 모드: Supabase에서 회원가입 후 profiles 테이블에서 role/sites 설정</div>'}
+
+function editUserSites(userId){
+if(CU.role!=='admin')return;
+var d=gDB();var u=null;
+for(var i=0;i<d.users.length;i++){if(d.users[i].id===userId){u=d.users[i];break}}
+if(!u)return;
+document.getElementById('ueUserId').value=userId;
+document.getElementById('ueUserName').textContent=u.name+' ('+u.id+')';
+var allSites=[];for(var k in d.sites)allSites.push(d.sites[k]);
+var currentSites=u.sites||[];
+document.getElementById('ueSiteChecks').innerHTML=allSites.map(function(s){
+var checked=currentSites.indexOf(s.id)>=0;
+return '<label style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;background:var(--bg1);border-radius:6px;cursor:pointer;border:1px solid '+(checked?'var(--blue)':'var(--b1)')+'">'
++'<input type="checkbox" value="'+s.id+'" '+(checked?'checked':'')+' style="width:16px;height:16px">'
++'<div><div style="font-size:12px;font-weight:500">'+s.name+'</div>'
++'<div style="font-size:10px;color:var(--t3)">'+(s.info.location||'위치 미설정')+'</div></div></label>'
+}).join('')||'<p style="color:var(--t3);font-size:11px">생성된 현장이 없습니다</p>';
+oM('mUserEdit')}
+
+function saveUserSites(){
+if(CU.role!=='admin')return;
+var userId=document.getElementById('ueUserId').value;
+var d=gDB();
+var checks=document.querySelectorAll('#ueSiteChecks input[type=checkbox]');
+var selected=[];
+for(var i=0;i<checks.length;i++){if(checks[i].checked)selected.push(checks[i].value)}
+for(var i=0;i<d.users.length;i++){
+if(d.users[i].id===userId){d.users[i].sites=selected;break}}
+sDB(d);cM('mUserEdit');addHist('담당자 배정',userId+': '+selected.length+'개 현장');rUsers();toast('배정 완료','success')}
+
 function rHist(){var d=gDB();document.getElementById('HL').innerHTML=d.editHistory.map(function(h){return '<div class="hi"><div style="width:6px;height:6px;border-radius:50%;background:var(--blue);margin-top:4px;flex-shrink:0"></div><div style="flex:1"><div><span style="color:var(--cyan);font-weight:500">'+h.user+'</span> - '+h.action+'</div><div style="color:var(--t3);margin-top:1px">'+h.detail+'</div><div style="color:var(--t3);font-size:9px">'+h.time+'</div></div></div>'}).join('')||emptyState('수정 이력이 없어요')}
 
 // Init
-document.addEventListener('DOMContentLoaded',function(){try{if(!localStorage.getItem(DK))iDB()}catch(e){iDB()}});
+document.addEventListener('DOMContentLoaded',function(){
+try{if(!localStorage.getItem(DK))iDB()}catch(e){iDB()}
+// Check Supabase config
+if(SUPABASE_URL!=='YOUR_SUPABASE_URL'){
+document.getElementById('loginTabs').style.display='flex';
+// Auto-restore session
+if(initSupabase()){
+SB.auth.getSession().then(function(res){
+if(res.data.session){
+SB_USER=res.data.session.user;USE_CLOUD=true;
+SB.from('profiles').select('*').eq('id',SB_USER.id).single().then(function(pr){
+if(!pr.error&&pr.data){
+CU={id:SB_USER.id,name:pr.data.name,role:pr.data.role,sites:pr.data.sites||['all'],curSite:pr.data.role==='admin'?'all':(pr.data.sites||[])[0]||'all'};
+loadCloudData().then(function(){
+document.getElementById('LP').style.display='none';document.getElementById('AP').style.display='block';
+setup();toast('자동 로그인 ☁️','info')})}})}})}}
+else{
+// No Supabase - hide cloud tab, show local only
+document.getElementById('loginTabs').style.display='none';
+document.getElementById('loginCloud').style.display='none';
+document.getElementById('loginLocal').style.display='block'}});
 
 // CDN load
 (function(){
 var s1=document.createElement('script');s1.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';s1.crossOrigin='anonymous';s1.onerror=function(){console.warn('Three.js unavailable')};document.head.appendChild(s1);
 var s2=document.createElement('script');s2.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s2.crossOrigin='anonymous';s2.onerror=function(){console.warn('XLSX unavailable')};document.head.appendChild(s2);
+var s3=document.createElement('script');s3.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';s3.crossOrigin='anonymous';s3.onerror=function(){console.warn('Supabase unavailable')};document.head.appendChild(s3);
 })();
 </script>
 </body>
