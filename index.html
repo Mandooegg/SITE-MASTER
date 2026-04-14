@@ -268,12 +268,12 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 </div>
 <h1>SITE-MASTER</h1><p class="sub">건설현장 관리시스템 v2.3</p><br>
 <!-- Mode tabs -->
-<div id="loginTabs" style="display:flex;gap:0;margin-bottom:16px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--b1)">
+<div id="loginTabs" style="display:none;gap:0;margin-bottom:16px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--b1)">
 <button class="ltab active" onclick="switchLoginMode('cloud')" id="tabCloud" style="flex:1;padding:10px;background:rgba(59,130,246,.15);color:var(--blue);border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">☁️ 클라우드</button>
 <button class="ltab" onclick="switchLoginMode('local')" id="tabLocal" style="flex:1;padding:10px;background:var(--bg1);color:var(--t3);border:none;font-family:inherit;font-size:12px;cursor:pointer">💾 로컬(오프라인)</button>
 </div>
-<!-- Cloud login -->
-<div id="loginCloud">
+<!-- Cloud login (hidden by default) -->
+<div id="loginCloud" style="display:none">
 <div class="fg"><label>이메일</label><input id="loginEmail" type="email" placeholder="name@company.com"></div>
 <div class="fg"><label>비밀번호</label><input type="password" id="loginCloudPw" placeholder="6자 이상"></div>
 <button class="btn bp" onclick="cloudLogin()" style="margin-bottom:8px">로그인</button>
@@ -283,8 +283,8 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 </div>
 <div id="cloudStatus" style="margin-top:10px;font-size:11px;color:var(--t3);text-align:center"></div>
 </div>
-<!-- Local login (existing) -->
-<div id="loginLocal" style="display:none">
+<!-- Local login (visible by default) -->
+<div id="loginLocal">
 <div class="fg"><label>아이디</label><input id="loginId" value="admin"></div>
 <div class="fg"><label>비밀번호</label><input type="password" id="loginPw" value="1234"></div>
 <div class="fg"><label>현장 선택</label><select id="loginSite"><option value="all">전체 현장 (관리자)</option><option value="site1">세종시 행복아파트</option><option value="site2">대전 한빛아파트</option></select></div>
@@ -387,8 +387,8 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 // ===== SITE-MASTER v2.3 =====
 // ===== SUPABASE CONFIG =====
 // Supabase 프로젝트 설정에서 URL과 anon key를 복사하세요
-var SUPABASE_URL='https://qrwtptmiykkaohoapgls.supabase.co';  // 예: https://abc123.supabase.co
-var SUPABASE_KEY='sb_publishable__TxV9ZI2TeANFj70Aurbhw_81qCpcNA';  // 예: eyJhbGci...
+var SUPABASE_URL='YOUR_SUPABASE_URL';  // 예: https://abc123.supabase.co
+var SUPABASE_KEY='YOUR_SUPABASE_ANON_KEY';  // 예: eyJhbGci...
 var SB=null; // Supabase client
 var SB_USER=null; // Current Supabase user
 var USE_CLOUD=false; // Cloud mode flag
