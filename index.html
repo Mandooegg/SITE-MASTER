@@ -387,8 +387,8 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 // ===== SITE-MASTER v2.3 =====
 // ===== SUPABASE CONFIG =====
 // Supabase 프로젝트 설정에서 URL과 anon key를 복사하세요
-var SUPABASE_URL='https://qrwtptmiykkaohoapgls.supabase.co';  // 예: https://abc123.supabase.co
-var SUPABASE_KEY='sb_publishable__TxV9ZI2TeANFj70Aurbhw_81qCpcNA';  // 예: eyJhbGci...
+var SUPABASE_URL='YOUR_SUPABASE_URL';  // 예: https://abc123.supabase.co
+var SUPABASE_KEY='YOUR_SUPABASE_ANON_KEY';  // 예: eyJhbGci...
 var SB=null; // Supabase client
 var SB_USER=null; // Current Supabase user
 var USE_CLOUD=false; // Cloud mode flag
@@ -420,17 +420,22 @@ var pw=document.getElementById('loginCloudPw').value;
 if(!email||!pw){setCloudStatus('이메일과 비밀번호를 입력하세요',true);return}
 setCloudStatus('로그인 중...');
 SB.auth.signInWithPassword({email:email,password:pw}).then(function(res){
-if(res.error){setCloudStatus(res.error.message,true);return}
+if(res.error){
+var msg=res.error.message;
+if(msg.indexOf('Invalid login')>=0)msg='이메일 또는 비밀번호가 틀렸습니다';
+if(msg.indexOf('Email not confirmed')>=0)msg='이메일 인증이 필요합니다. 받은 메일함을 확인하세요.';
+setCloudStatus(msg,true);return}
 SB_USER=res.data.user;USE_CLOUD=true;
-// Load profile
+setCloudStatus('프로필 로딩...');
 SB.from('profiles').select('*').eq('id',SB_USER.id).single().then(function(pr){
-if(pr.error||!pr.data){setCloudStatus('프로필 없음. 관리자에게 문의하세요.',true);return}
+if(pr.error||!pr.data){
+setCloudStatus('프로필이 없습니다. 회원가입을 다시 해주세요.',true);
+SB.auth.signOut();SB_USER=null;USE_CLOUD=false;return}
 CU={id:SB_USER.id,name:pr.data.name,role:pr.data.role,sites:pr.data.sites||['all'],curSite:pr.data.role==='admin'?'all':(pr.data.sites||[])[0]||'all'};
-// Load cloud data
 loadCloudData().then(function(){
 document.getElementById('LP').style.display='none';document.getElementById('AP').style.display='block';
 setup();toast(CU.name+'님 환영합니다! ☁️','success');
-setTimeout(function(){mascotReact('login');setMascotMood('love','jump');showMascotTip('클라우드 연결!','데이터가 실시간 동기화됩니다 ☁️')},800);
+setTimeout(function(){mascotReact('login');setMascotMood('love','jump');showMascotTip('클라우드 연결!','데이터가 동기화됩니다 ☁️')},800);
 resetIdleTimer()})})}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
 
 function cloudSignup(){
@@ -442,21 +447,19 @@ if(pw.length<6){setCloudStatus('비밀번호 6자 이상',true);return}
 setCloudStatus('가입 중...');
 SB.auth.signUp({email:email,password:pw}).then(function(res){
 if(res.error){setCloudStatus(res.error.message,true);return}
-// Create org + profile
+if(!res.data.user){setCloudStatus('가입 실패',true);return}
 var uid=res.data.user.id;
-SB.from('organizations').insert({name:'My Org'}).select().single().then(function(org){
-if(org.error){setCloudStatus('조직 생성 실패',true);return}
+setCloudStatus('조직 생성 중...');
+// Step 1: Create org
+SB.from('organizations').insert({name:email.split('@')[0]+'의 조직'}).select().single().then(function(org){
+if(org.error){setCloudStatus('조직 생성 실패: '+org.error.message,true);console.error(org.error);return}
+setCloudStatus('프로필 생성 중...');
+// Step 2: Create profile
 SB.from('profiles').insert({id:uid,org_id:org.data.id,name:email.split('@')[0],role:'admin',sites:['all']}).then(function(pr){
-if(pr.error){setCloudStatus('프로필 생성 실패: '+pr.error.message,true);return}
-// Create default sites
-var orgId=org.data.id;
-var initPromises=[
-SB.from('sites').insert([
-{id:'site1',org_id:orgId,name:'현장 1',info:{projectName:'신축공사 1',location:'',lat:37.5,lng:127}},
-{id:'site2',org_id:orgId,name:'현장 2',info:{projectName:'신축공사 2',location:'',lat:37.5,lng:127}}
-])];
-Promise.all(initPromises).then(function(){
-setCloudStatus('가입 완료! 로그인 해주세요.')})})})}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
+if(pr.error){setCloudStatus('프로필 생성 실패: '+pr.error.message,true);console.error(pr.error);return}
+setCloudStatus('✅ 가입 완료! 로그인 해주세요.');
+document.getElementById('loginCloudPw').value=''})})
+}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
 
 function cloudResetPw(){
 if(!SB){setCloudStatus('Supabase 미설정',true);return}
