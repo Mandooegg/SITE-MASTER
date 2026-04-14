@@ -285,12 +285,12 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 <div id="signupForm" style="display:none;margin-top:12px;padding:14px;background:var(--bg1);border:1px solid var(--b1);border-radius:var(--rs)">
 <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--cyan)">회원가입</div>
 <div class="fg"><label>이름</label><input id="signupName" placeholder="홍길동"></div>
-<div style="display:flex;gap:0;margin-bottom:12px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--b1)">
-<button id="stNew" onclick="switchSignupType('new')" style="flex:1;padding:8px;background:rgba(59,130,246,.15);color:var(--blue);border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">새 조직 만들기</button>
-<button id="stJoin" onclick="switchSignupType('join')" style="flex:1;padding:8px;background:var(--bg2);color:var(--t3);border:none;font-size:11px;cursor:pointer;font-family:inherit">조직 참여 (코드 입력)</button>
+<div style="display:flex;gap:0;margin-bottom:4px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--b1)">
+<button id="stNew" onclick="switchSignupType('new')" style="flex:1;padding:8px;background:rgba(16,185,129,.15);color:var(--green);border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">🏢 처음이에요 (새 조직)</button>
+<button id="stJoin" onclick="switchSignupType('join')" style="flex:1;padding:8px;background:var(--bg2);color:var(--t3);border:none;font-size:11px;cursor:pointer;font-family:inherit">🔗 초대받았어요 (코드)</button>
 </div>
-<div id="signupNew"><div class="fg"><label>조직명</label><input id="signupOrg" placeholder="(주)대한건설"></div></div>
-<div id="signupJoin" style="display:none"><div class="fg"><label>조직 코드 (관리자에게 받기)</label><input id="signupOrgCode" placeholder="6자리 코드" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-weight:700"></div></div>
+<div id="signupNew"><div style="font-size:10px;color:var(--green);margin-bottom:8px">✓ 새 조직을 만들고 관리자가 됩니다. 코드는 가입 후 자동 생성됩니다.</div><div class="fg"><label>조직명 (회사/현장명)</label><input id="signupOrg" placeholder="(주)대한건설"></div></div>
+<div id="signupJoin" style="display:none"><div style="font-size:10px;color:var(--amber);margin-bottom:8px">✓ 관리자에게 받은 6자리 코드를 입력하세요</div><div class="fg"><label>조직 코드</label><input id="signupOrgCode" placeholder="A3F2K9" maxlength="6" style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-weight:700;font-size:18px"></div></div>
 <div style="display:flex;gap:6px">
 <button class="btn bo" onclick="hideSignupForm()" style="flex:1">취소</button>
 <button class="btn bg" onclick="cloudSignup()" style="flex:1">가입하기</button>
@@ -402,8 +402,8 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 // ===== SITE-MASTER v2.3 =====
 // ===== SUPABASE CONFIG =====
 // Supabase 프로젝트 설정에서 URL과 anon key를 복사하세요
-var SUPABASE_URL='https://qrwtptmiykkaohoapgls.supabase.co';  // 예: https://abc123.supabase.co
-var SUPABASE_KEY='sb_publishable__TxV9ZI2TeANFj70Aurbhw_81qCpcNA';  // 예: eyJhbGci...
+var SUPABASE_URL='YOUR_SUPABASE_URL';  // 예: https://abc123.supabase.co
+var SUPABASE_KEY='YOUR_SUPABASE_ANON_KEY';  // 예: eyJhbGci...
 var SB=null; // Supabase client
 var SB_USER=null; // Current Supabase user
 var USE_CLOUD=false; // Cloud mode flag
@@ -458,10 +458,10 @@ function hideSignupForm(){document.getElementById('signupForm').style.display='n
 function switchSignupType(type){
 document.getElementById('signupNew').style.display=type==='new'?'block':'none';
 document.getElementById('signupJoin').style.display=type==='join'?'block':'none';
-document.getElementById('stNew').style.background=type==='new'?'rgba(59,130,246,.15)':'var(--bg2)';
-document.getElementById('stNew').style.color=type==='new'?'var(--blue)':'var(--t3)';
-document.getElementById('stJoin').style.background=type==='join'?'rgba(59,130,246,.15)':'var(--bg2)';
-document.getElementById('stJoin').style.color=type==='join'?'var(--blue)':'var(--t3)'}
+document.getElementById('stNew').style.background=type==='new'?'rgba(16,185,129,.15)':'var(--bg2)';
+document.getElementById('stNew').style.color=type==='new'?'var(--green)':'var(--t3)';
+document.getElementById('stJoin').style.background=type==='join'?'rgba(245,158,11,.15)':'var(--bg2)';
+document.getElementById('stJoin').style.color=type==='join'?'var(--amber)':'var(--t3)'}
 
 function cloudSignup(){
 if(!SB){setCloudStatus('Supabase 미설정',true);return}
