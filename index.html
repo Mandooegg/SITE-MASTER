@@ -278,8 +278,23 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 <div class="fg"><label>비밀번호</label><input type="password" id="loginCloudPw" placeholder="6자 이상"></div>
 <button class="btn bp" onclick="cloudLogin()" style="margin-bottom:8px">로그인</button>
 <div style="display:flex;gap:6px">
-<button class="btn bo" onclick="cloudSignup()" style="flex:1;font-size:12px">회원가입</button>
+<button class="btn bo" onclick="showSignupForm()" style="flex:1;font-size:12px">회원가입</button>
 <button class="btn bo" onclick="cloudResetPw()" style="flex:1;font-size:12px">비밀번호 찾기</button>
+</div>
+<!-- Signup form (toggle) -->
+<div id="signupForm" style="display:none;margin-top:12px;padding:14px;background:var(--bg1);border:1px solid var(--b1);border-radius:var(--rs)">
+<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--cyan)">회원가입</div>
+<div class="fg"><label>이름</label><input id="signupName" placeholder="홍길동"></div>
+<div style="display:flex;gap:0;margin-bottom:12px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--b1)">
+<button id="stNew" onclick="switchSignupType('new')" style="flex:1;padding:8px;background:rgba(59,130,246,.15);color:var(--blue);border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">새 조직 만들기</button>
+<button id="stJoin" onclick="switchSignupType('join')" style="flex:1;padding:8px;background:var(--bg2);color:var(--t3);border:none;font-size:11px;cursor:pointer;font-family:inherit">조직 참여 (코드 입력)</button>
+</div>
+<div id="signupNew"><div class="fg"><label>조직명</label><input id="signupOrg" placeholder="(주)대한건설"></div></div>
+<div id="signupJoin" style="display:none"><div class="fg"><label>조직 코드 (관리자에게 받기)</label><input id="signupOrgCode" placeholder="6자리 코드" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-weight:700"></div></div>
+<div style="display:flex;gap:6px">
+<button class="btn bo" onclick="hideSignupForm()" style="flex:1">취소</button>
+<button class="btn bg" onclick="cloudSignup()" style="flex:1">가입하기</button>
+</div>
 </div>
 <div id="cloudStatus" style="margin-top:10px;font-size:11px;color:var(--t3);text-align:center"></div>
 </div>
@@ -387,8 +402,8 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 // ===== SITE-MASTER v2.3 =====
 // ===== SUPABASE CONFIG =====
 // Supabase 프로젝트 설정에서 URL과 anon key를 복사하세요
-var SUPABASE_URL='https://qrwtptmiykkaohoapgls.supabase.co';  // 예: https://abc123.supabase.co
-var SUPABASE_KEY='sb_publishable__TxV9ZI2TeANFj70Aurbhw_81qCpcNA';  // 예: eyJhbGci...
+var SUPABASE_URL='YOUR_SUPABASE_URL';  // 예: https://abc123.supabase.co
+var SUPABASE_KEY='YOUR_SUPABASE_ANON_KEY';  // 예: eyJhbGci...
 var SB=null; // Supabase client
 var SB_USER=null; // Current Supabase user
 var USE_CLOUD=false; // Cloud mode flag
@@ -438,27 +453,54 @@ setup();toast(CU.name+'님 환영합니다! ☁️','success');
 setTimeout(function(){mascotReact('login');setMascotMood('love','jump');showMascotTip('클라우드 연결!','데이터가 동기화됩니다 ☁️')},800);
 resetIdleTimer()})})}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
 
+function showSignupForm(){document.getElementById('signupForm').style.display='block'}
+function hideSignupForm(){document.getElementById('signupForm').style.display='none'}
+function switchSignupType(type){
+document.getElementById('signupNew').style.display=type==='new'?'block':'none';
+document.getElementById('signupJoin').style.display=type==='join'?'block':'none';
+document.getElementById('stNew').style.background=type==='new'?'rgba(59,130,246,.15)':'var(--bg2)';
+document.getElementById('stNew').style.color=type==='new'?'var(--blue)':'var(--t3)';
+document.getElementById('stJoin').style.background=type==='join'?'rgba(59,130,246,.15)':'var(--bg2)';
+document.getElementById('stJoin').style.color=type==='join'?'var(--blue)':'var(--t3)'}
+
 function cloudSignup(){
 if(!SB){setCloudStatus('Supabase 미설정',true);return}
 var email=document.getElementById('loginEmail').value.trim();
 var pw=document.getElementById('loginCloudPw').value;
+var name=document.getElementById('signupName').value.trim();
 if(!email||!pw){setCloudStatus('이메일과 비밀번호를 입력하세요',true);return}
 if(pw.length<6){setCloudStatus('비밀번호 6자 이상',true);return}
+if(!name){setCloudStatus('이름을 입력하세요',true);return}
+var isJoin=document.getElementById('signupJoin').style.display!=='none';
+var orgCode=isJoin?document.getElementById('signupOrgCode').value.trim().toUpperCase():'';
+var orgName=isJoin?'':document.getElementById('signupOrg').value.trim();
+if(isJoin&&orgCode.length<4){setCloudStatus('조직 코드를 입력하세요',true);return}
 setCloudStatus('가입 중...');
-SB.auth.signUp({email:email,password:pw}).then(function(res){
+SB.auth.signUp({email:email,password:pw,options:{data:{display_name:name}}}).then(function(res){
 if(res.error){setCloudStatus(res.error.message,true);return}
 if(!res.data.user){setCloudStatus('가입 실패',true);return}
-var uid=res.data.user.id;
+if(isJoin){
+// Join existing org via RPC
+setCloudStatus('조직 참여 중...');
+SB.rpc('join_org_by_code',{code:orgCode,user_name:name}).then(function(rpc){
+if(rpc.error){setCloudStatus('조직 참여 실패: '+rpc.error.message,true);return}
+if(rpc.data&&rpc.data.error){setCloudStatus(rpc.data.error,true);return}
+setCloudStatus('✅ 가입 완료! '+rpc.data.org_name+'에 참여됨. 로그인 해주세요.');
+hideSignupForm()})}
+else{
+// New org - update org name and profile name
 setCloudStatus('조직 생성 중...');
-// Step 1: Create org
-SB.from('organizations').insert({name:email.split('@')[0]+'의 조직'}).select().single().then(function(org){
-if(org.error){setCloudStatus('조직 생성 실패: '+org.error.message,true);console.error(org.error);return}
-setCloudStatus('프로필 생성 중...');
-// Step 2: Create profile
-SB.from('profiles').insert({id:uid,org_id:org.data.id,name:email.split('@')[0],role:'admin',sites:['all']}).then(function(pr){
-if(pr.error){setCloudStatus('프로필 생성 실패: '+pr.error.message,true);console.error(pr.error);return}
-setCloudStatus('✅ 가입 완료! 로그인 해주세요.');
-document.getElementById('loginCloudPw').value=''})})
+var uid=res.data.user.id;
+// Trigger already created org+profile, just update names
+setTimeout(function(){
+SB.from('profiles').select('org_id').eq('id',uid).single().then(function(pr){
+if(pr.error){setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm();return}
+var promises=[];
+if(orgName)promises.push(SB.from('organizations').update({name:orgName}).eq('id',pr.data.org_id));
+promises.push(SB.from('profiles').update({name:name}).eq('id',uid));
+Promise.all(promises).then(function(){
+setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm()})})
+},1000)}
 }).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
 
 function cloudResetPw(){
@@ -1059,6 +1101,48 @@ function rUsers(){
 if(CU.role!=='admin')return;
 var d=gDB();
 var allSites=[];for(var k in d.sites)allSites.push(d.sites[k]);
+// Org code section (cloud only)
+var orgCodeHtml='';
+if(USE_CLOUD&&SB){
+orgCodeHtml='<div style="padding:14px;background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(59,130,246,.06));border:1px solid var(--b1);border-radius:var(--r);margin-bottom:14px">'
++'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
++'<div><div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:4px">조직 초대 코드</div>'
++'<div style="font-size:10px;color:var(--t3)">팀원에게 이 코드를 공유하면 같은 조직으로 가입됩니다</div></div>'
++'<div id="orgCodeDisplay" style="font-family:monospace;font-size:22px;font-weight:900;letter-spacing:6px;color:var(--amber);background:var(--bg1);padding:8px 16px;border-radius:var(--rs);border:1px solid var(--b2)">로딩...</div></div></div>';
+// Load org code
+SB.from('profiles').select('org_id').eq('id',CU.id).single().then(function(pr){
+if(!pr.error&&pr.data){
+SB.from('organizations').select('org_code').eq('id',pr.data.org_id).single().then(function(org){
+var el=document.getElementById('orgCodeDisplay');
+if(el&&org.data)el.textContent=org.data.org_code||'없음'})}})}
+// Cloud: load users from Supabase
+if(USE_CLOUD&&SB){
+orgCodeHtml+='<div class="tw" id="cloudUserTable"><div style="text-align:center;padding:20px;color:var(--t3)">사용자 로딩...</div></div>';
+document.getElementById('UML').innerHTML=orgCodeHtml
++'<div style="margin-top:12px;padding:12px;background:rgba(59,130,246,.06);border:1px solid var(--b1);border-radius:var(--rs);font-size:11px;color:var(--t2)">'
++'<div style="font-weight:600;margin-bottom:4px;color:var(--cyan)">사용 방법</div>'
++'1. 위 조직 코드를 팀원에게 공유<br>'
++'2. 팀원이 회원가입 시 "조직 참여" 선택 → 코드 입력<br>'
++'3. 가입 후 이 페이지에서 역할과 현장을 배정</div>';
+// Load cloud users
+SB.from('profiles').select('*').then(function(res){
+if(res.error){document.getElementById('cloudUserTable').innerHTML='<p style="color:var(--red)">로딩 실패</p>';return}
+var users=res.data||[];
+document.getElementById('cloudUserTable').innerHTML='<table><thead><tr><th>이름</th><th>역할</th><th>배정 현장</th><th>관리</th></tr></thead><tbody>'
++users.map(function(u){
+var isMe=u.id===CU.id;
+var siteNames=[];
+if(u.role==='admin')siteNames=['전체 현장'];
+else if(u.sites)u.sites.forEach(function(si){var s=d.sites[si];if(s)siteNames.push(s.name)});
+return '<tr><td style="font-weight:600">'+u.name+(isMe?' <span style="font-size:9px;color:var(--cyan)">(나)</span>':'')+'</td>'
++'<td><select onchange="changeUserRole(\''+u.id+'\',this.value)" style="padding:4px 8px;background:var(--bg1);border:1px solid var(--b1);color:var(--t1);border-radius:4px;font-size:11px"'+(isMe?' disabled':'')+'>'+
+'<option value="admin"'+(u.role==='admin'?' selected':'')+'>관리자</option>'+
+'<option value="manager"'+(u.role==='manager'?' selected':'')+'>현장담당</option></select></td>'
++'<td style="font-size:11px">'+(siteNames.length?siteNames.join(', '):'<span style="color:var(--amber)">미배정</span>')+'</td>'
++'<td>'+(u.role==='manager'?'<button class="btn bx bpu" onclick="editUserSites(\''+u.id+'\')">현장배정</button>':'<span style="font-size:10px;color:var(--t3)">전체</span>')+'</td></tr>'
+}).join('')+'</tbody></table>';
+});return}
+// Local mode
 document.getElementById('UML').innerHTML='<div class="tw"><table><thead><tr><th>이름</th><th>아이디</th><th>역할</th><th>배정 현장</th><th>관리</th></tr></thead><tbody>'
 +d.users.map(function(u){
 var assignedNames=[];
@@ -1068,14 +1152,38 @@ return '<tr><td style="font-weight:600">'+u.name+'</td><td style="font-size:11px
 +'<td><span class="st '+(u.role==='admin'?'stc':'stp')+'" style="font-size:10px">'+(u.role==='admin'?'관리자':'현장담당')+'</span></td>'
 +'<td style="font-size:11px">'+(assignedNames.length?assignedNames.join(', '):'<span style="color:var(--red)">미배정</span>')+'</td>'
 +'<td>'+(u.role==='manager'?'<button class="btn bx bpu" onclick="editUserSites(\''+u.id+'\')">배정</button>':'<span style="font-size:10px;color:var(--t3)">-</span>')+'</td></tr>'
-}).join('')+'</tbody></table></div>'
-+'<div style="margin-top:12px;padding:12px;background:rgba(59,130,246,.06);border:1px solid var(--b1);border-radius:var(--rs);font-size:11px;color:var(--t2)">'
-+'<div style="font-weight:600;margin-bottom:4px;color:var(--cyan)">현장담당 계정 안내</div>'
-+'로컬 모드: 기본 계정 (manager1/1234, manager2/1234)<br>'
-+'클라우드 모드: Supabase에서 회원가입 후 profiles 테이블에서 role/sites 설정</div>'}
+}).join('')+'</tbody></table></div>'}
+
+function changeUserRole(userId,newRole){
+if(CU.role!=='admin')return;
+if(USE_CLOUD&&SB){
+SB.from('profiles').update({role:newRole,sites:newRole==='admin'?['all']:[]}).eq('id',userId).then(function(res){
+if(res.error){toast('역할 변경 실패: '+res.error.message,'error');return}
+toast(newRole==='admin'?'관리자로 변경':'현장담당으로 변경','success');
+rUsers()})}else{
+var d=gDB();for(var i=0;i<d.users.length;i++){if(d.users[i].id===userId){d.users[i].role=newRole;if(newRole==='admin')d.users[i].sites=['all'];}}sDB(d);rUsers()}}
 
 function editUserSites(userId){
 if(CU.role!=='admin')return;
+if(USE_CLOUD&&SB){
+// Load user profile from Supabase
+SB.from('profiles').select('*').eq('id',userId).single().then(function(pr){
+if(pr.error){toast('사용자 로딩 실패','error');return}
+var u=pr.data;
+document.getElementById('ueUserId').value=userId;
+document.getElementById('ueUserName').textContent=u.name;
+var d=gDB();var allSites=[];for(var k in d.sites)allSites.push(d.sites[k]);
+var currentSites=u.sites||[];
+document.getElementById('ueSiteChecks').innerHTML=allSites.map(function(s){
+var checked=currentSites.indexOf(s.id)>=0;
+return '<label style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;background:var(--bg1);border-radius:6px;cursor:pointer;border:1px solid '+(checked?'var(--blue)':'var(--b1)')+'">'
++'<input type="checkbox" value="'+s.id+'" '+(checked?'checked':'')+' style="width:16px;height:16px">'
++'<div><div style="font-size:12px;font-weight:500">'+s.name+'</div>'
++'<div style="font-size:10px;color:var(--t3)">'+(s.info.location||'위치 미설정')+'</div></div></label>'
+}).join('')||'<p style="color:var(--t3);font-size:11px">현장을 먼저 생성하세요</p>';
+oM('mUserEdit')})}
+else{
+// Local mode
 var d=gDB();var u=null;
 for(var i=0;i<d.users.length;i++){if(d.users[i].id===userId){u=d.users[i];break}}
 if(!u)return;
@@ -1090,18 +1198,22 @@ return '<label style="display:flex;align-items:center;gap:8px;padding:8px;margin
 +'<div><div style="font-size:12px;font-weight:500">'+s.name+'</div>'
 +'<div style="font-size:10px;color:var(--t3)">'+(s.info.location||'위치 미설정')+'</div></div></label>'
 }).join('')||'<p style="color:var(--t3);font-size:11px">생성된 현장이 없습니다</p>';
-oM('mUserEdit')}
+oM('mUserEdit')}}
 
 function saveUserSites(){
 if(CU.role!=='admin')return;
 var userId=document.getElementById('ueUserId').value;
-var d=gDB();
 var checks=document.querySelectorAll('#ueSiteChecks input[type=checkbox]');
 var selected=[];
 for(var i=0;i<checks.length;i++){if(checks[i].checked)selected.push(checks[i].value)}
-for(var i=0;i<d.users.length;i++){
-if(d.users[i].id===userId){d.users[i].sites=selected;break}}
-sDB(d);cM('mUserEdit');addHist('담당자 배정',userId+': '+selected.length+'개 현장');rUsers();toast('배정 완료','success')}
+if(USE_CLOUD&&SB){
+SB.from('profiles').update({sites:selected}).eq('id',userId).then(function(res){
+if(res.error){toast('배정 실패: '+res.error.message,'error');return}
+cM('mUserEdit');toast('현장 배정 완료 ('+selected.length+'개)','success');rUsers()})}
+else{
+var d=gDB();
+for(var i=0;i<d.users.length;i++){if(d.users[i].id===userId){d.users[i].sites=selected;break}}
+sDB(d);cM('mUserEdit');addHist('담당자 배정',userId+': '+selected.length+'개 현장');rUsers();toast('배정 완료','success')}}
 
 function rHist(){var d=gDB();document.getElementById('HL').innerHTML=d.editHistory.map(function(h){return '<div class="hi"><div style="width:6px;height:6px;border-radius:50%;background:var(--blue);margin-top:4px;flex-shrink:0"></div><div style="flex:1"><div><span style="color:var(--cyan);font-weight:500">'+h.user+'</span> - '+h.action+'</div><div style="color:var(--t3);margin-top:1px">'+h.detail+'</div><div style="color:var(--t3);font-size:9px">'+h.time+'</div></div></div>'}).join('')||emptyState('수정 이력이 없어요')}
 
