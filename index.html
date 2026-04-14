@@ -387,8 +387,8 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 // ===== SITE-MASTER v2.3 =====
 // ===== SUPABASE CONFIG =====
 // Supabase 프로젝트 설정에서 URL과 anon key를 복사하세요
-var SUPABASE_URL='https://qrwtptmiykkaohoapgls.supabase.co';  // 예: https://abc123.supabase.co
-var SUPABASE_KEY='sb_publishable__TxV9ZI2TeANFj70Aurbhw_81qCpcNA';  // 예: eyJhbGci...
+var SUPABASE_URL='YOUR_SUPABASE_URL';  // 예: https://abc123.supabase.co
+var SUPABASE_KEY='YOUR_SUPABASE_ANON_KEY';  // 예: eyJhbGci...
 var SB=null; // Supabase client
 var SB_USER=null; // Current Supabase user
 var USE_CLOUD=false; // Cloud mode flag
@@ -1108,21 +1108,32 @@ function rHist(){var d=gDB();document.getElementById('HL').innerHTML=d.editHisto
 // Init
 document.addEventListener('DOMContentLoaded',function(){
 try{if(!localStorage.getItem(DK))iDB()}catch(e){iDB()}
-// If Supabase not configured, stay on local mode
 if(SUPABASE_URL==='YOUR_SUPABASE_URL'){
+// Not configured - local only
 document.getElementById('loginTabs').style.display='none';
 document.getElementById('loginCloud').style.display='none';
-document.getElementById('loginLocal').style.display='block'}});
-
-// Supabase ready callback (called when CDN loads)
-function onSupabaseReady(){
-if(SUPABASE_URL==='YOUR_SUPABASE_URL')return;
-if(!initSupabase())return;
-// Show cloud tab
+document.getElementById('loginLocal').style.display='block'}
+else{
+// Configured - show loading then switch when CDN ready
 document.getElementById('loginTabs').style.display='flex';
 document.getElementById('loginCloud').style.display='block';
 document.getElementById('loginLocal').style.display='none';
 switchLoginMode('cloud');
+document.getElementById('cloudStatus').innerHTML='<span style="color:var(--amber)">Supabase 연결 중...</span>';
+// Timeout fallback - if CDN doesn't load in 8 seconds
+setTimeout(function(){
+if(!SB){document.getElementById('cloudStatus').innerHTML='<span style="color:var(--red)">Supabase 연결 실패</span><br><span style="font-size:10px">로컬 탭으로 전환하거나 새로고침 해주세요</span>'}
+},8000)}});
+
+// Supabase ready callback (called when CDN loads)
+function onSupabaseReady(){
+if(SUPABASE_URL==='YOUR_SUPABASE_URL')return;
+if(!initSupabase()){
+var cs=document.getElementById('cloudStatus');
+if(cs)cs.innerHTML='<span style="color:var(--red)">Supabase 초기화 실패</span>';return}
+// Connected!
+var cs=document.getElementById('cloudStatus');
+if(cs)cs.innerHTML='<span style="color:var(--green)">✅ Supabase 연결됨</span>';
 // Auto-restore session
 SB.auth.getSession().then(function(res){
 if(res.data.session){
