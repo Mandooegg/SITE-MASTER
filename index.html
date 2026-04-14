@@ -1105,11 +1105,22 @@ function rHist(){var d=gDB();document.getElementById('HL').innerHTML=d.editHisto
 // Init
 document.addEventListener('DOMContentLoaded',function(){
 try{if(!localStorage.getItem(DK))iDB()}catch(e){iDB()}
-// Check Supabase config
-if(SUPABASE_URL!=='YOUR_SUPABASE_URL'){
+// If Supabase not configured, stay on local mode
+if(SUPABASE_URL==='YOUR_SUPABASE_URL'){
+document.getElementById('loginTabs').style.display='none';
+document.getElementById('loginCloud').style.display='none';
+document.getElementById('loginLocal').style.display='block'}});
+
+// Supabase ready callback (called when CDN loads)
+function onSupabaseReady(){
+if(SUPABASE_URL==='YOUR_SUPABASE_URL')return;
+if(!initSupabase())return;
+// Show cloud tab
 document.getElementById('loginTabs').style.display='flex';
+document.getElementById('loginCloud').style.display='block';
+document.getElementById('loginLocal').style.display='none';
+switchLoginMode('cloud');
 // Auto-restore session
-if(initSupabase()){
 SB.auth.getSession().then(function(res){
 if(res.data.session){
 SB_USER=res.data.session.user;USE_CLOUD=true;
@@ -1118,18 +1129,16 @@ if(!pr.error&&pr.data){
 CU={id:SB_USER.id,name:pr.data.name,role:pr.data.role,sites:pr.data.sites||['all'],curSite:pr.data.role==='admin'?'all':(pr.data.sites||[])[0]||'all'};
 loadCloudData().then(function(){
 document.getElementById('LP').style.display='none';document.getElementById('AP').style.display='block';
-setup();toast('자동 로그인 ☁️','info')})}})}})}}
-else{
-// No Supabase - hide cloud tab, show local only
-document.getElementById('loginTabs').style.display='none';
-document.getElementById('loginCloud').style.display='none';
-document.getElementById('loginLocal').style.display='block'}});
+setup();toast('자동 로그인 ☁️','info')})}})}})}
 
 // CDN load
 (function(){
 var s1=document.createElement('script');s1.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';s1.crossOrigin='anonymous';s1.onerror=function(){console.warn('Three.js unavailable')};document.head.appendChild(s1);
 var s2=document.createElement('script');s2.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s2.crossOrigin='anonymous';s2.onerror=function(){console.warn('XLSX unavailable')};document.head.appendChild(s2);
-var s3=document.createElement('script');s3.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';s3.crossOrigin='anonymous';s3.onerror=function(){console.warn('Supabase unavailable')};document.head.appendChild(s3);
+var s3=document.createElement('script');s3.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';s3.crossOrigin='anonymous';
+s3.onload=function(){console.log('Supabase loaded');onSupabaseReady()};
+s3.onerror=function(){console.warn('Supabase CDN failed')};
+document.head.appendChild(s3);
 })();
 </script>
 </body>
