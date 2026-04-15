@@ -272,31 +272,28 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 <button class="ltab active" onclick="switchLoginMode('cloud')" id="tabCloud" style="flex:1;padding:10px;background:rgba(59,130,246,.15);color:var(--blue);border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">☁️ 클라우드</button>
 <button class="ltab" onclick="switchLoginMode('local')" id="tabLocal" style="flex:1;padding:10px;background:var(--bg1);color:var(--t3);border:none;font-family:inherit;font-size:12px;cursor:pointer">💾 로컬(오프라인)</button>
 </div>
-<!-- Cloud login (hidden by default) -->
+<!-- Cloud login page -->
 <div id="loginCloud" style="display:none">
 <div class="fg"><label>이메일</label><input id="loginEmail" type="email" placeholder="name@company.com"></div>
 <div class="fg"><label>비밀번호</label><input type="password" id="loginCloudPw" placeholder="6자 이상"></div>
 <button class="btn bp" onclick="cloudLogin()" style="margin-bottom:8px">로그인</button>
 <div style="display:flex;gap:6px">
-<button class="btn bo" onclick="showSignupForm()" style="flex:1;font-size:12px">회원가입</button>
+<button class="btn bo" onclick="showCloudPage('signup')" style="flex:1;font-size:12px">회원가입</button>
 <button class="btn bo" onclick="cloudResetPw()" style="flex:1;font-size:12px">비밀번호 찾기</button>
 </div>
-<!-- Signup form (toggle) -->
-<div id="signupForm" style="display:none;margin-top:12px;padding:14px;background:var(--bg1);border:1px solid var(--b1);border-radius:var(--rs)">
-<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--cyan)">회원가입</div>
-<div class="fg"><label>이름</label><input id="signupName" placeholder="홍길동"></div>
-<div style="display:flex;gap:0;margin-bottom:4px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--b1)">
-<button id="stNew" onclick="switchSignupType('new')" style="flex:1;padding:8px;background:rgba(16,185,129,.15);color:var(--green);border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">🏢 처음이에요 (새 조직)</button>
-<button id="stJoin" onclick="switchSignupType('join')" style="flex:1;padding:8px;background:var(--bg2);color:var(--t3);border:none;font-size:11px;cursor:pointer;font-family:inherit">🔗 초대받았어요 (코드)</button>
-</div>
-<div id="signupNew"><div style="font-size:10px;color:var(--green);margin-bottom:8px">✓ 새 조직을 만들고 관리자가 됩니다. 코드는 가입 후 자동 생성됩니다.</div><div class="fg"><label>조직명 (회사/현장명)</label><input id="signupOrg" placeholder="(주)대한건설"></div></div>
-<div id="signupJoin" style="display:none"><div style="font-size:10px;color:var(--amber);margin-bottom:8px">✓ 관리자에게 받은 6자리 코드를 입력하세요</div><div class="fg"><label>조직 코드</label><input id="signupOrgCode" placeholder="A3F2K9" maxlength="6" style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-weight:700;font-size:18px"></div></div>
-<div style="display:flex;gap:6px">
-<button class="btn bo" onclick="hideSignupForm()" style="flex:1">취소</button>
-<button class="btn bg" onclick="cloudSignup()" style="flex:1">가입하기</button>
-</div>
-</div>
 <div id="cloudStatus" style="margin-top:10px;font-size:11px;color:var(--t3);text-align:center"></div>
+</div>
+<!-- Cloud signup page (separate) -->
+<div id="signupCloud" style="display:none">
+<div style="font-size:15px;font-weight:700;margin-bottom:4px;color:var(--cyan);text-align:center">회원가입</div>
+<div style="font-size:10px;color:var(--t3);margin-bottom:14px;text-align:center">가입 후 관리자가 역할과 현장을 배정합니다</div>
+<div class="fg"><label>이름</label><input id="signupName" placeholder="홍길동"></div>
+<div class="fg"><label>이메일</label><input id="signupEmail" type="email" placeholder="name@company.com"></div>
+<div class="fg"><label>비밀번호</label><input type="password" id="signupPw" placeholder="6자 이상"></div>
+<div class="fg"><label>비밀번호 확인</label><input type="password" id="signupPwConfirm" placeholder="비밀번호 재입력"></div>
+<button class="btn bg" onclick="cloudSignup()" style="width:100%;padding:14px;font-size:15px;font-weight:700;margin-bottom:8px">가입하기</button>
+<button class="btn bo" onclick="showCloudPage('login')" style="width:100%;font-size:12px">← 로그인으로 돌아가기</button>
+<div id="signupStatus" style="margin-top:10px;font-size:11px;color:var(--t3);text-align:center"></div>
 </div>
 <!-- Local login (visible by default) -->
 <div id="loginLocal">
@@ -320,7 +317,7 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 <div class="ns" id="navAdmin" style="display:none"><div class="nst">관리자</div><div class="ni" data-p="sites" onclick="nav('sites')">🏗️ 현장 생성/관리</div><div class="ni" data-p="users" onclick="nav('users')">👷 담당자 배정</div></div>
 <div class="ns"><div class="nst">기록</div><div class="ni" data-p="hist" onclick="nav('hist')">📝 수정이력</div></div>
 </nav>
-<div class="sbf"><div class="ui"><div class="ua" id="UA"></div><div class="ud"><div class="nm" id="UN"></div><div class="rl" id="UR"></div></div></div><div id="cloudBadge" style="display:none;text-align:center;padding:4px;margin-top:4px;font-size:9px;color:var(--cyan);background:rgba(6,182,212,.08);border-radius:4px">☁️ 클라우드 동기화</div><button class="lb" onclick="doLogout()">로그아웃</button></div>
+<div class="sbf"><div class="ui"><div class="ua" id="UA"></div><div class="ud"><div class="nm" id="UN"></div><div class="rl" id="UR"></div></div></div><div id="cloudBadge" style="display:none;text-align:center;padding:4px;margin-top:4px;font-size:9px;color:var(--cyan);background:rgba(6,182,212,.08);border-radius:4px">☁️ 클라우드 동기화</div><button id="btnJoinOrg" class="lb" onclick="oM('mJoinOrg')" style="display:none;color:var(--purple);border-color:var(--purple)">🔗 조직 참여 (코드 입력)</button><button class="lb" onclick="doLogout()">로그아웃</button></div>
 </aside>
 <main class="mc">
 <div class="ch"><button class="hamburger" onclick="toggleSB()">☰</button><div><h2 id="PT">대시보드</h2><div class="bc" id="PB"></div></div></div>
@@ -396,14 +393,19 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 <div class="mo" id="mAddR"><div class="md"><div class="mh"><h3>발주 규칙</h3><button class="mx" onclick="cM('mAddR')">×</button></div><div class="mb"><div class="fr"><div class="fd"><label>자재명</label><input id="nRM"></div><div class="fd"><label>조건(N층 완료시)</label><input type="number" id="nRF" min="1" max="50"></div></div><div class="fr"><div class="fd"><label>리드타임(일)</label><input type="number" id="nRL" min="1"></div><div class="fd"><label>대상</label><select id="nRT"><option value="all">전체</option><option value="admin">관리자</option><option value="manager">현장담당</option></select></div></div></div><div class="mf"><button class="btn bs bo" onclick="cM('mAddR')">취소</button><button class="btn bs bg" onclick="addRule()">추가</button></div></div></div>
 <div class="mo" id="mInsp"><div class="md"><div class="mh"><h3 id="mIT">검수항목</h3><button class="mx" onclick="cM('mInsp')">×</button></div><div class="mb"><div class="fr"><div class="fd"><label>검수명</label><input id="iNm"></div><div class="fd"><label>카테고리</label><select id="iCat"><option value="factory">공장검수</option><option value="test">테스트</option></select></div></div><div class="fr"><div class="fd"><label>대상</label><input id="iTgt"></div><div class="fd"><label>업체</label><input id="iVen"></div></div><div class="fr"><div class="fd"><label>예정일</label><input type="date" id="iDt"></div><div class="fd"><label>상태</label><select id="iSt"><option value="scheduled">예정</option><option value="inprogress">진행중</option><option value="pass">합격</option><option value="fail">불합격</option><option value="retest">재검수</option></select></div></div><div class="fr"><div class="fd"><label>담당자</label><input id="iMgr"></div><div class="fd"><label>장소</label><input id="iLoc"></div></div><div class="fr c1"><div class="fd"><label>비고</label><textarea id="iNt" rows="2" style="resize:vertical"></textarea></div></div><input type="hidden" id="iEid" value=""></div><div class="mf"><button class="btn bs bo" onclick="cM('mInsp')">취소</button><button class="btn bs bg" onclick="saveInsp()">저장</button></div></div></div>
 <div class="mo" id="mOrd"><div class="md"><div class="mh"><h3>발주 수정</h3><button class="mx" onclick="cM('mOrd')">×</button></div><div class="mb"><div class="fr"><div class="fd"><label>자재명</label><input id="oMat"></div><div class="fd"><label>발주일</label><input type="date" id="oDt"></div></div><div class="fr"><div class="fd"><label>상태</label><select id="oSt"><option value="ready">발주준비</option><option value="request">의뢰서상신</option><option value="bidding">입찰예정</option><option value="bidcomplete">입찰완료</option><option value="ordered">발주완료</option></select></div><div class="fd"><label>비고</label><input id="oNt"></div></div><input type="hidden" id="oId"></div><div class="mf"><button class="btn bs bd" onclick="delOrd()" style="margin-right:auto">삭제</button><button class="btn bs bo" onclick="cM('mOrd')">취소</button><button class="btn bs bg" onclick="saveOrd()">저장</button></div></div></div>
+<div class="mo" id="mJoinOrg"><div class="md"><div class="mh"><h3>조직 참여</h3><button class="mx" onclick="cM('mJoinOrg')">×</button></div><div class="mb">
+<div style="font-size:11px;color:var(--t2);margin-bottom:12px;line-height:1.6">관리자에게 받은 6자리 조직 코드를 입력하면<br>해당 조직으로 이동하여 함께 작업할 수 있습니다.</div>
+<div class="fg"><label>조직 코드</label><input id="joinOrgCode" placeholder="A3F2K9" maxlength="6" style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-weight:700;font-size:18px"></div>
+<div id="joinOrgStatus" style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:8px"></div>
+</div><div class="mf"><button class="btn bs bo" onclick="cM('mJoinOrg')">취소</button><button class="btn bs bpu" onclick="joinOrgByCode()">참여하기</button></div></div></div>
 
 <script>
 "use strict";
 // ===== SITE-MASTER v2.3 =====
 // ===== SUPABASE CONFIG =====
 // Supabase 프로젝트 설정에서 URL과 anon key를 복사하세요
-var SUPABASE_URL='https://qrwtptmiykkaohoapgls.supabase.co';  // 예: https://abc123.supabase.co
-var SUPABASE_KEY='sb_publishable__TxV9ZI2TeANFj70Aurbhw_81qCpcNA';  // 예: eyJhbGci...
+var SUPABASE_URL='YOUR_SUPABASE_URL';  // 예: https://abc123.supabase.co
+var SUPABASE_KEY='YOUR_SUPABASE_ANON_KEY';  // 예: eyJhbGci...
 var SB=null; // Supabase client
 var SB_USER=null; // Current Supabase user
 var USE_CLOUD=false; // Cloud mode flag
@@ -416,6 +418,7 @@ try{SB=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);return true}catch
 // Login mode switcher
 function switchLoginMode(mode){
 document.getElementById('loginCloud').style.display=mode==='cloud'?'block':'none';
+document.getElementById('signupCloud').style.display='none';
 document.getElementById('loginLocal').style.display=mode==='local'?'block':'none';
 document.getElementById('tabCloud').style.background=mode==='cloud'?'rgba(59,130,246,.15)':'var(--bg1)';
 document.getElementById('tabCloud').style.color=mode==='cloud'?'var(--blue)':'var(--t3)';
@@ -478,68 +481,56 @@ setup();toast(CU.name+'님 환영합니다! ☁️','success');
 setTimeout(function(){mascotReact('login');setMascotMood('love','jump');showMascotTip('클라우드 연결!','데이터가 동기화됩니다 ☁️')},800);
 resetIdleTimer()})}
 
-function showSignupForm(){document.getElementById('signupForm').style.display='block'}
-function hideSignupForm(){document.getElementById('signupForm').style.display='none'}
-function switchSignupType(type){
-document.getElementById('signupNew').style.display=type==='new'?'block':'none';
-document.getElementById('signupJoin').style.display=type==='join'?'block':'none';
-document.getElementById('stNew').style.background=type==='new'?'rgba(16,185,129,.15)':'var(--bg2)';
-document.getElementById('stNew').style.color=type==='new'?'var(--green)':'var(--t3)';
-document.getElementById('stJoin').style.background=type==='join'?'rgba(245,158,11,.15)':'var(--bg2)';
-document.getElementById('stJoin').style.color=type==='join'?'var(--amber)':'var(--t3)'}
+function showCloudPage(page){
+document.getElementById('loginCloud').style.display=page==='login'?'block':'none';
+document.getElementById('signupCloud').style.display=page==='signup'?'block':'none';
+if(page==='login'){var cs=document.getElementById('cloudStatus');if(cs)cs.textContent=''}
+if(page==='signup'){var ss=document.getElementById('signupStatus');if(ss)ss.textContent=''}}
+
+function setSignupStatus(msg,isErr){var el=document.getElementById('signupStatus');if(el){el.textContent=msg;el.style.color=isErr?'var(--red)':'var(--green)'}}
 
 function cloudSignup(){
-if(!SB){setCloudStatus('Supabase 미설정',true);return}
-var email=document.getElementById('loginEmail').value.trim();
-var pw=document.getElementById('loginCloudPw').value;
+if(!SB){setSignupStatus('Supabase 미설정',true);return}
 var name=document.getElementById('signupName').value.trim();
-if(!email||!pw){setCloudStatus('이메일과 비밀번호를 입력하세요',true);return}
-if(pw.length<6){setCloudStatus('비밀번호 6자 이상',true);return}
-if(!name){setCloudStatus('이름을 입력하세요',true);return}
-var isJoin=document.getElementById('signupJoin').style.display!=='none';
-var orgCode=isJoin?document.getElementById('signupOrgCode').value.trim().toUpperCase():'';
-var orgName=isJoin?'':document.getElementById('signupOrg').value.trim();
-if(isJoin&&orgCode.length<4){setCloudStatus('조직 코드를 입력하세요',true);return}
-setCloudStatus('가입 중...');
+var email=document.getElementById('signupEmail').value.trim();
+var pw=document.getElementById('signupPw').value;
+var pwc=document.getElementById('signupPwConfirm').value;
+if(!name){setSignupStatus('이름을 입력하세요',true);return}
+if(!email){setSignupStatus('이메일을 입력하세요',true);return}
+if(!pw){setSignupStatus('비밀번호를 입력하세요',true);return}
+if(pw.length<6){setSignupStatus('비밀번호 6자 이상',true);return}
+if(pw!==pwc){setSignupStatus('비밀번호가 일치하지 않습니다',true);return}
+setSignupStatus('가입 중...');
 SB.auth.signUp({email:email,password:pw,options:{data:{display_name:name}}}).then(function(res){
-if(res.error){setCloudStatus(res.error.message,true);return}
-if(!res.data.user){setCloudStatus('가입 실패',true);return}
-if(isJoin){
-// Join existing org via RPC
-setCloudStatus('조직 참여 중...');
-SB.rpc('join_org_by_code',{code:orgCode,user_name:name}).then(function(rpc){
-if(rpc.error){setCloudStatus('조직 참여 실패: '+rpc.error.message,true);return}
-if(rpc.data&&rpc.data.error){setCloudStatus(rpc.data.error,true);return}
-setCloudStatus('✅ 가입 완료! '+rpc.data.org_name+'에 참여됨. 로그인 해주세요.');
-hideSignupForm()})}
-else{
-// New org - check if trigger created profile, fallback to manual creation
-setCloudStatus('조직 생성 중...');
+if(res.error){
+var msg=res.error.message;
+if(msg.indexOf('already registered')>=0)msg='이미 가입된 이메일입니다';
+setSignupStatus(msg,true);return}
+if(!res.data.user){setSignupStatus('가입 실패',true);return}
+// Wait for trigger to create profile, fallback to manual
 var uid=res.data.user.id;
-_waitForProfile(uid,name,orgName,0)}
-}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
+_waitForProfile(uid,name,0)
+}).catch(function(e){setSignupStatus('오류: '+e.message,true)})}
 
-function _waitForProfile(uid,name,orgName,attempt){
+function _waitForProfile(uid,name,attempt){
 SB.from('profiles').select('org_id').eq('id',uid).single().then(function(pr){
 if(pr.error||!pr.data){
 if(attempt<2){
-setTimeout(function(){_waitForProfile(uid,name,orgName,attempt+1)},1200);return}
+setTimeout(function(){_waitForProfile(uid,name,attempt+1)},1200);return}
 // Trigger didn't create profile - create manually
-setCloudStatus('프로필 직접 생성 중...');
+setSignupStatus('프로필 생성 중...');
 var orgCodeVal=(Math.random().toString(36).substring(2,8)).toUpperCase();
-var finalOrgName=orgName||name+'의 조직';
-SB.from('organizations').insert({name:finalOrgName,org_code:orgCodeVal}).select().single().then(function(orgRes){
-if(orgRes.error){setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm();return}
-SB.from('profiles').insert({id:uid,org_id:orgRes.data.id,name:name,role:'admin',sites:['all']}).then(function(profRes){
-if(profRes.error){setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm();return}
-setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm()})});return}
-// Trigger worked - update names
-var promises=[];
-if(orgName)promises.push(SB.from('organizations').update({name:orgName}).eq('id',pr.data.org_id));
-promises.push(SB.from('profiles').update({name:name}).eq('id',uid));
-Promise.all(promises).then(function(){
-setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm()})
-}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
+SB.from('organizations').insert({name:name+'의 조직',org_code:orgCodeVal}).select().single().then(function(orgRes){
+if(orgRes.error){setSignupStatus('✅ 가입 완료! 로그인 해주세요.');showCloudPage('login');return}
+SB.from('profiles').insert({id:uid,org_id:orgRes.data.id,name:name,role:'manager',sites:['all']}).then(function(profRes){
+if(profRes.error){setSignupStatus('✅ 가입 완료! 로그인 해주세요.');showCloudPage('login');return}
+setSignupStatus('✅ 가입 완료! 로그인 해주세요.');
+setTimeout(function(){showCloudPage('login')},1500)})});return}
+// Trigger worked - update name
+SB.from('profiles').update({name:name}).eq('id',uid).then(function(){
+setSignupStatus('✅ 가입 완료! 로그인 해주세요.');
+setTimeout(function(){showCloudPage('login')},1500)})
+}).catch(function(e){setSignupStatus('오류: '+e.message,true)})}
 
 function cloudResetPw(){
 if(!SB){setCloudStatus('Supabase 미설정',true);return}
@@ -548,6 +539,23 @@ if(!email){setCloudStatus('이메일을 입력하세요',true);return}
 SB.auth.resetPasswordForEmail(email).then(function(res){
 if(res.error){setCloudStatus(res.error.message,true);return}
 setCloudStatus('비밀번호 재설정 메일을 보냈습니다')})}
+
+function joinOrgByCode(){
+if(!SB||!USE_CLOUD){return}
+var code=document.getElementById('joinOrgCode').value.trim().toUpperCase();
+var st=document.getElementById('joinOrgStatus');
+if(code.length<4){if(st){st.textContent='조직 코드를 입력하세요';st.style.color='var(--red)'}return}
+if(st){st.textContent='참여 중...';st.style.color='var(--t3)'}
+SB.rpc('join_org_by_code',{code:code,user_name:CU.name}).then(function(rpc){
+if(rpc.error){if(st){st.textContent='오류: '+rpc.error.message;st.style.color='var(--red)'}return}
+if(rpc.data&&rpc.data.error){if(st){st.textContent=rpc.data.error;st.style.color='var(--red)'}return}
+// Success - reload profile and app
+cM('mJoinOrg');toast(rpc.data.org_name+' 조직에 참여했습니다!','success');
+SB.from('profiles').select('*').eq('id',SB_USER.id).single().then(function(pr){
+if(!pr.error&&pr.data){
+CU={id:SB_USER.id,name:pr.data.name,role:pr.data.role,sites:pr.data.sites||['all'],curSite:pr.data.role==='admin'?'all':(pr.data.sites||[])[0]||'all'};
+loadCloudData().then(function(){setup()})}})
+}).catch(function(e){if(st){st.textContent='오류: '+e.message;st.style.color='var(--red)'}})}
 
 // ===== CLOUD DATA SYNC =====
 function loadCloudData(){
@@ -792,7 +800,7 @@ resetIdleTimer()}
 function doLogout(){
 if(USE_CLOUD&&SB){SB.auth.signOut();SB_USER=null;USE_CLOUD=false}
 CU=null;closeSB();document.getElementById('LP').style.display='flex';document.getElementById('AP').style.display='none';var mf=document.getElementById('mascotFloat');if(mf)mf.classList.add('hide');var mb=document.getElementById('mascotBody');if(mb)mb.innerHTML='';if(tAF)cancelAnimationFrame(tAF);if(tR){tR.dispose();tR=null}}
-function setup(){var ia=CU.role==='admin';document.getElementById('UA').className='ua '+(ia?'admin':'manager');document.getElementById('UA').textContent=CU.name[0];document.getElementById('UN').textContent=CU.name;document.getElementById('UR').textContent=ia?'관리자':'현장담당';document.getElementById('navPS').style.display=ia?'flex':'none';document.getElementById('navAdmin').style.display=ia?'block':'none';var d=gDB();document.getElementById('SN').textContent=ia?'전체 현장 관리':(d.sites[CU.curSite]?d.sites[CU.curSite].name:'');var cb=document.getElementById('cloudBadge');if(cb)cb.style.display=USE_CLOUD?'block':'none';popSel();updBdg();nav('dash')}
+function setup(){var ia=CU.role==='admin';document.getElementById('UA').className='ua '+(ia?'admin':'manager');document.getElementById('UA').textContent=CU.name[0];document.getElementById('UN').textContent=CU.name;document.getElementById('UR').textContent=ia?'관리자':'현장담당';document.getElementById('navPS').style.display=ia?'flex':'none';document.getElementById('navAdmin').style.display=ia?'block':'none';var d=gDB();document.getElementById('SN').textContent=ia?'전체 현장 관리':(d.sites[CU.curSite]?d.sites[CU.curSite].name:'');var cb=document.getElementById('cloudBadge');if(cb)cb.style.display=USE_CLOUD?'block':'none';var bj=document.getElementById('btnJoinOrg');if(bj)bj.style.display=USE_CLOUD?'block':'none';popSel();updBdg();nav('dash')}
 
 // Navigation
 function nav(p){
@@ -1158,10 +1166,10 @@ if(USE_CLOUD&&SB){
 orgCodeHtml+='<div class="tw" id="cloudUserTable"><div style="text-align:center;padding:20px;color:var(--t3)">사용자 로딩...</div></div>';
 document.getElementById('UML').innerHTML=orgCodeHtml
 +'<div style="margin-top:12px;padding:12px;background:rgba(59,130,246,.06);border:1px solid var(--b1);border-radius:var(--rs);font-size:11px;color:var(--t2)">'
-+'<div style="font-weight:600;margin-bottom:4px;color:var(--cyan)">사용 방법</div>'
-+'1. 위 조직 코드를 팀원에게 공유<br>'
-+'2. 팀원이 회원가입 시 "조직 참여" 선택 → 코드 입력<br>'
-+'3. 가입 후 이 페이지에서 역할과 현장을 배정</div>';
++'<div style="font-weight:600;margin-bottom:4px;color:var(--cyan)">팀원 추가 방법</div>'
++'1. 팀원이 회원가입 페이지에서 이름/이메일/비밀번호로 가입<br>'
++'2. 관리자가 이 페이지에서 조직 코드를 공유하거나 직접 조직에 추가<br>'
++'3. 아래 목록에서 역할(관리자/현장담당)과 현장을 배정</div>';
 // Load cloud users
 SB.from('profiles').select('*').then(function(res){
 if(res.error){document.getElementById('cloudUserTable').innerHTML='<p style="color:var(--red)">로딩 실패</p>';return}
@@ -1262,6 +1270,7 @@ if(SUPABASE_URL==='YOUR_SUPABASE_URL'){
 // Not configured - local only
 document.getElementById('loginTabs').style.display='none';
 document.getElementById('loginCloud').style.display='none';
+document.getElementById('signupCloud').style.display='none';
 document.getElementById('loginLocal').style.display='block'}
 else{
 // Configured - show loading then switch when CDN ready
