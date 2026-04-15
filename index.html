@@ -402,8 +402,8 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}tbod
 // ===== SITE-MASTER v2.3 =====
 // ===== SUPABASE CONFIG =====
 // Supabase 프로젝트 설정에서 URL과 anon key를 복사하세요
-var SUPABASE_URL='https://qrwtptmiykkaohoapgls.supabase.co';  // 예: https://abc123.supabase.co
-var SUPABASE_KEY='sb_publishable__TxV9ZI2TeANFj70Aurbhw_81qCpcNA';  // 예: eyJhbGci...
+var SUPABASE_URL='YOUR_SUPABASE_URL';  // 예: https://abc123.supabase.co
+var SUPABASE_KEY='YOUR_SUPABASE_ANON_KEY';  // 예: eyJhbGci...
 var SB=null; // Supabase client
 var SB_USER=null; // Current Supabase user
 var USE_CLOUD=false; // Cloud mode flag
@@ -442,16 +442,41 @@ if(msg.indexOf('Email not confirmed')>=0)msg='이메일 인증이 필요합니�
 setCloudStatus(msg,true);return}
 SB_USER=res.data.user;USE_CLOUD=true;
 setCloudStatus('프로필 로딩...');
+_loadProfileAndEnter(0)
+}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
+
+function _loadProfileAndEnter(attempt){
 SB.from('profiles').select('*').eq('id',SB_USER.id).single().then(function(pr){
 if(pr.error||!pr.data){
-setCloudStatus('프로필이 없습니다. 회원가입을 다시 해주세요.',true);
+if(attempt<2){
+setCloudStatus('프로필 확인 중... ('+(attempt+1)+'/3)');
+setTimeout(function(){_loadProfileAndEnter(attempt+1)},1500);return}
+setCloudStatus('프로필 자동 생성 중...');
+_autoCreateProfile()}
+else{_enterApp(pr.data)}
+})}
+
+function _autoCreateProfile(){
+var userName=SB_USER.email?SB_USER.email.split('@')[0]:'사용자';
+var displayName=(SB_USER.user_metadata&&SB_USER.user_metadata.display_name)||userName;
+var orgCodeVal=(Math.random().toString(36).substring(2,8)).toUpperCase();
+SB.from('organizations').insert({name:displayName+'의 조직',org_code:orgCodeVal}).select().single().then(function(orgRes){
+if(orgRes.error){
+setCloudStatus('조직 생성 실패: '+orgRes.error.message,true);
 SB.auth.signOut();SB_USER=null;USE_CLOUD=false;return}
-CU={id:SB_USER.id,name:pr.data.name,role:pr.data.role,sites:pr.data.sites||['all'],curSite:pr.data.role==='admin'?'all':(pr.data.sites||[])[0]||'all'};
+SB.from('profiles').insert({id:SB_USER.id,org_id:orgRes.data.id,name:displayName,role:'admin',sites:['all']}).select().single().then(function(profRes){
+if(profRes.error){
+setCloudStatus('프로필 생성 실패: '+profRes.error.message,true);
+SB.auth.signOut();SB_USER=null;USE_CLOUD=false;return}
+_enterApp(profRes.data)})})}
+
+function _enterApp(profileData){
+CU={id:SB_USER.id,name:profileData.name,role:profileData.role,sites:profileData.sites||['all'],curSite:profileData.role==='admin'?'all':(profileData.sites||[])[0]||'all'};
 loadCloudData().then(function(){
 document.getElementById('LP').style.display='none';document.getElementById('AP').style.display='block';
 setup();toast(CU.name+'님 환영합니다! ☁️','success');
 setTimeout(function(){mascotReact('login');setMascotMood('love','jump');showMascotTip('클라우드 연결!','데이터가 동기화됩니다 ☁️')},800);
-resetIdleTimer()})})}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
+resetIdleTimer()})}
 
 function showSignupForm(){document.getElementById('signupForm').style.display='block'}
 function hideSignupForm(){document.getElementById('signupForm').style.display='none'}
@@ -488,19 +513,32 @@ if(rpc.data&&rpc.data.error){setCloudStatus(rpc.data.error,true);return}
 setCloudStatus('✅ 가입 완료! '+rpc.data.org_name+'에 참여됨. 로그인 해주세요.');
 hideSignupForm()})}
 else{
-// New org - update org name and profile name
+// New org - check if trigger created profile, fallback to manual creation
 setCloudStatus('조직 생성 중...');
 var uid=res.data.user.id;
-// Trigger already created org+profile, just update names
-setTimeout(function(){
+_waitForProfile(uid,name,orgName,0)}
+}).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
+
+function _waitForProfile(uid,name,orgName,attempt){
 SB.from('profiles').select('org_id').eq('id',uid).single().then(function(pr){
-if(pr.error){setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm();return}
+if(pr.error||!pr.data){
+if(attempt<2){
+setTimeout(function(){_waitForProfile(uid,name,orgName,attempt+1)},1200);return}
+// Trigger didn't create profile - create manually
+setCloudStatus('프로필 직접 생성 중...');
+var orgCodeVal=(Math.random().toString(36).substring(2,8)).toUpperCase();
+var finalOrgName=orgName||name+'의 조직';
+SB.from('organizations').insert({name:finalOrgName,org_code:orgCodeVal}).select().single().then(function(orgRes){
+if(orgRes.error){setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm();return}
+SB.from('profiles').insert({id:uid,org_id:orgRes.data.id,name:name,role:'admin',sites:['all']}).then(function(profRes){
+if(profRes.error){setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm();return}
+setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm()})});return}
+// Trigger worked - update names
 var promises=[];
 if(orgName)promises.push(SB.from('organizations').update({name:orgName}).eq('id',pr.data.org_id));
 promises.push(SB.from('profiles').update({name:name}).eq('id',uid));
 Promise.all(promises).then(function(){
-setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm()})})
-},1000)}
+setCloudStatus('✅ 가입 완료! 로그인 해주세요.');hideSignupForm()})
 }).catch(function(e){setCloudStatus('오류: '+e.message,true)})}
 
 function cloudResetPw(){
@@ -1250,12 +1288,7 @@ if(cs)cs.innerHTML='<span style="color:var(--green)">✅ Supabase 연결됨</spa
 SB.auth.getSession().then(function(res){
 if(res.data.session){
 SB_USER=res.data.session.user;USE_CLOUD=true;
-SB.from('profiles').select('*').eq('id',SB_USER.id).single().then(function(pr){
-if(!pr.error&&pr.data){
-CU={id:SB_USER.id,name:pr.data.name,role:pr.data.role,sites:pr.data.sites||['all'],curSite:pr.data.role==='admin'?'all':(pr.data.sites||[])[0]||'all'};
-loadCloudData().then(function(){
-document.getElementById('LP').style.display='none';document.getElementById('AP').style.display='block';
-setup();toast('자동 로그인 ☁️','info')})}})}})}
+_loadProfileAndEnter(0)}})}
 
 // CDN load
 (function(){
